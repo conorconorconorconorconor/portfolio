@@ -1,0 +1,1236 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>3D Radial Dial Viewer</title>
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-color: #EAE6DF;
+            --text-color: #111111;
+            --text-muted: #777777;
+            --line-color: #BBBBBB;
+            --active-color: #D32F2F;
+            --card-width: 320px;
+            --card-height: 180px;
+        }
+
+        body {
+            margin: 0; padding: 0;
+            overflow: hidden;
+            background-color: var(--bg-color);
+            font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+            user-select: none; -webkit-user-select: none;
+            cursor: none;
+        }
+
+        /* ── CURSOR ── */
+        #cursor-crosshair {
+            position: fixed; width: 30px; height: 30px;
+            pointer-events: none; z-index: 9000;
+            transform: translate(-50%, -50%);
+        }
+        #cursor-crosshair::before, #cursor-crosshair::after {
+            content: ""; position: absolute; background: var(--active-color);
+        }
+        #cursor-crosshair::before { width: 100%; height: 1px; top: 50%; left: 0; }
+        #cursor-crosshair::after  { height: 100%; width: 1px; left: 50%; top: 0; }
+
+        /* ── BOOT SEQUENCE ── */
+        #boot-screen {
+            position: fixed; inset: 0;
+            background: #0a0a0a;
+            z-index: 8000;
+            display: flex; flex-direction: column;
+            justify-content: center; align-items: flex-start;
+            padding: 60px;
+            box-sizing: border-box;
+            transition: opacity 0.6s ease;
+        }
+        #boot-screen.fade-out { opacity: 0; pointer-events: none; }
+        #boot-lines {
+            font-family: "Courier New", Courier, monospace;
+            font-size: 11px;
+            color: #33ff33;
+            line-height: 2;
+            letter-spacing: 1px;
+            max-width: 600px;
+        }
+        #boot-lines .line { display: block; opacity: 0; }
+        #boot-lines .line.show { opacity: 1; }
+        #boot-lines .line.red { color: var(--active-color); }
+        #boot-lines .line.dim { color: #4a774a; }
+        #boot-cursor {
+            display: inline-block; width: 8px; height: 14px;
+            background: #33ff33; vertical-align: middle;
+            animation: blink 0.7s step-end infinite;
+            margin-left: 4px;
+        }
+        @keyframes blink { 50% { opacity: 0; } }
+        #boot-skip {
+            position: absolute; bottom: 40px; right: 40px;
+            font-family: 'Press Start 2P', monospace;
+            font-size: 8px; color: #2a5a2a;
+            letter-spacing: 1px;
+        }
+
+        /* ── HUD ELEMENTS ── */
+        .system-block {
+            position: fixed; top: 40px; left: 40px;
+            z-index: 100; pointer-events: none;
+        }
+        .metadata-block {
+            font-family: "Courier New", Courier, monospace;
+            font-size: 10px; color: var(--text-muted);
+            text-transform: uppercase; letter-spacing: 1.5px; line-height: 1.8;
+        }
+        .meta-label { color: var(--text-color); font-weight: bold; }
+        .meta-value  { color: var(--active-color); }
+        .meta-tag    {
+            display: inline-block; padding: 1px 5px;
+            border: 1px solid currentColor; font-size: 8px;
+            letter-spacing: 1px; margin-left: 4px;
+            vertical-align: middle;
+        }
+
+        .header-block {
+            position: fixed; top: 40px; right: 40px;
+            text-align: right; z-index: 100; pointer-events: none;
+        }
+        .title-pixel {
+            font-family: 'Press Start 2P', monospace; font-size: 14px;
+            text-transform: lowercase; color: #dcd8d1;
+            text-shadow: -1px -1px 0 rgba(17,17,17,0.2), 1px 1px 0 rgba(255,255,255,0.8);
+            margin-bottom: 8px;
+        }
+        .subtitle-pixel {
+            font-family: 'Press Start 2P', monospace; font-size: 9px;
+            text-transform: uppercase; color: #dcd8d1;
+            text-shadow: -1px -1px 0 rgba(17,17,17,0.2), 1px 1px 0 rgba(255,255,255,0.8);
+        }
+
+        #degree-indicator {
+            position: fixed; bottom: 40px; right: 40px;
+            font-size: 28px; font-weight: 700;
+            font-family: "Courier New", Courier, monospace;
+            color: var(--active-color); z-index: 100;
+            pointer-events: none; letter-spacing: 1px;
+        }
+        #hint {
+            position: fixed; bottom: 40px; left: 40px;
+            font-family: "Courier New", Courier, monospace;
+            font-size: 9px; color: var(--text-muted);
+            text-transform: uppercase; letter-spacing: 1.5px;
+            pointer-events: none; line-height: 1.6; opacity: 0.7;
+        }
+
+        /* ── SEARCH OVERLAY ── */
+        #search-overlay {
+            position: fixed; inset: 0;
+            background: rgba(234,230,223,0.97);
+            z-index: 6000;
+            display: flex; flex-direction: column;
+            align-items: center; justify-content: flex-start;
+            padding-top: 15vh;
+            opacity: 0; pointer-events: none;
+            transition: opacity 0.25s ease;
+        }
+        #search-overlay.visible { opacity: 1; pointer-events: auto; }
+        #search-wrap {
+            width: 90%; max-width: 640px;
+            border-bottom: 2px solid var(--text-color);
+            display: flex; align-items: center; gap: 16px;
+            padding-bottom: 12px; margin-bottom: 32px;
+        }
+        #search-label {
+            font-family: 'Press Start 2P', monospace;
+            font-size: 10px; color: var(--active-color);
+            white-space: nowrap; letter-spacing: 1px;
+        }
+        #search-input {
+            flex: 1; background: none; border: none; outline: none;
+            font-family: "Courier New", Courier, monospace;
+            font-size: 18px; color: var(--text-color);
+            caret-color: var(--active-color);
+            cursor: text;
+        }
+        #search-results {
+            width: 90%; max-width: 640px;
+            max-height: 50vh; overflow-y: auto;
+        }
+        .search-result-item {
+            display: flex; align-items: center; gap: 16px;
+            padding: 10px 0;
+            border-bottom: 1px solid var(--line-color);
+            cursor: pointer;
+            transition: padding-left 0.15s ease;
+        }
+        .search-result-item:hover { padding-left: 8px; }
+        .search-result-item:hover .sr-title { color: var(--active-color); }
+        .sr-idx {
+            font-family: "Courier New", Courier, monospace;
+            font-size: 10px; color: var(--text-muted); min-width: 28px;
+        }
+        .sr-title {
+            font-size: 12px; font-weight: 700;
+            text-transform: uppercase; letter-spacing: 0.5px;
+            flex: 1; transition: color 0.15s;
+        }
+        .sr-tag {
+            font-family: "Courier New", Courier, monospace;
+            font-size: 8px; padding: 2px 6px;
+            border: 1px solid currentColor; letter-spacing: 1px;
+        }
+        #search-esc-hint {
+            position: absolute; bottom: 40px; right: 40px;
+            font-family: "Courier New", Courier, monospace;
+            font-size: 9px; color: var(--text-muted);
+            text-transform: uppercase; letter-spacing: 1.5px;
+        }
+
+        /* Category tag colours */
+        .tag-broadcast { color: #185FA5; }
+        .tag-digital    { color: #0F6E56; }
+        .tag-branded    { color: #993C1D; }
+        .tag-social     { color: #993556; }
+        .tag-internal   { color: #5F5E5A; }
+        .tag-animation  { color: #534AB7; }
+
+        /* ── SCENE ── */
+        #scene {
+            width: 100vw; height: 100vh;
+            display: flex; justify-content: center; align-items: center;
+            perspective: 2000px;
+        }
+        #tilt-container {
+            position: relative; transform-style: preserve-3d;
+            transform: scale(0.8) rotateX(68deg);
+            transition: transform 0.3s ease;
+        }
+        #dial {
+            position: relative; transform-style: preserve-3d;
+            will-change: transform;
+        }
+        .item {
+            position: absolute; left: 0; top: 0;
+            transform-style: preserve-3d;
+        }
+        .card-wrapper {
+            position: absolute;
+            left: calc(var(--card-width) / -2);
+            top: calc(var(--card-height) * -1);
+            width: var(--card-width); height: var(--card-height);
+            transform-origin: bottom center;
+            transform: translateZ(160px) rotateX(90deg) rotateY(-65deg);
+            background: white; padding: 4px; box-sizing: border-box;
+            border: 1px solid #111;
+            pointer-events: auto; cursor: pointer;
+            transition: transform 0.5s cubic-bezier(0.2,0.8,0.2,1.2), box-shadow 0.4s ease;
+        }
+        .card-wrapper img {
+            width: 100%; height: 100%; object-fit: cover;
+            background: #ccc; display: block;
+            border: 1px solid #111; box-sizing: border-box;
+            transform: rotate(180deg) scaleX(-1);
+            image-rendering: -webkit-optimize-contrast;
+            image-rendering: crisp-edges;
+            filter: grayscale(1) contrast(0.9) opacity(0.8);
+            transition: filter 0.4s ease;
+            pointer-events: none;
+        }
+        .card-tag-badge {
+            position: absolute; bottom: 8px; right: 8px;
+            font-family: "Courier New", Courier, monospace;
+            font-size: 7px; padding: 2px 5px;
+            border: 1px solid rgba(255,255,255,0.6);
+            color: rgba(255,255,255,0.7);
+            background: rgba(0,0,0,0.35);
+            letter-spacing: 1px; text-transform: uppercase;
+            pointer-events: none;
+            opacity: 0; transition: opacity 0.3s ease;
+            transform: scaleX(-1) rotate(180deg);
+            transform-origin: center center;
+        }
+        .item.active .card-tag-badge { opacity: 1; }
+        .line {
+            position: absolute; left: -1px; top: -450px;
+            width: 1px; height: 750px;
+            background-color: var(--line-color);
+            transform-origin: top center;
+        }
+        .info {
+            position: absolute; left: 0; top: 100px;
+            transform-origin: top left;
+            transform: rotate(-90deg) translateX(-100%) translateY(calc(-100% - 10px));
+            text-align: left; white-space: nowrap;
+            transition: color 0.3s ease, transform 0.5s cubic-bezier(0.2,0.8,0.2,1.2);
+            pointer-events: none; max-width: 400px;
+        }
+        .title {
+            font-size: 11px; font-weight: 700;
+            text-transform: uppercase; color: var(--text-color);
+            margin-bottom: 2px; letter-spacing: 0.5px;
+            transition: color 0.3s ease, font-size 0.3s ease;
+        }
+        .stats {
+            font-size: 9px; font-family: "Courier New", Courier, monospace;
+            color: var(--text-muted); letter-spacing: 1px;
+            transition: color 0.3s ease, font-size 0.3s ease;
+        }
+        .item.active .info {
+            transform: rotate(-90deg) translateX(calc(-100% - 25px)) translateY(calc(-100% - 15px)) scale(1.1);
+        }
+        .item.active .title { color: var(--active-color); font-size: 14px; letter-spacing: 1px; }
+        .item.active .stats { color: var(--text-color); font-size: 11px; }
+        .item.active .card-wrapper {
+            transform: translateZ(410px) rotateX(90deg) rotateY(-65deg) scale(1.2);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.15);
+        }
+        .item.active .card-wrapper img {
+            filter: grayscale(0) contrast(1.1) brightness(1.05) opacity(1);
+            outline: 2px solid var(--active-color); outline-offset: -2px;
+            animation: pulse-border 2s ease-in-out infinite;
+        }
+        @keyframes pulse-border {
+            0%,100% { outline-color: var(--active-color); }
+            50%      { outline-color: transparent; }
+        }
+
+        #selector-line {
+            position: absolute; left: 50%; top: 50%;
+            width: 2px; height: 780px;
+            background-color: var(--active-color);
+            transform-origin: top center;
+            transform: translateX(-50%) rotateZ(20deg) translateZ(-2px);
+            pointer-events: none;
+        }
+
+        /* ── VIDEO MODAL + LETTERBOX ── */
+        #letterbox-top, #letterbox-bottom {
+            position: fixed; left: 0; width: 100%;
+            height: 0; background: #000;
+            z-index: 3500; transition: height 0.45s cubic-bezier(0.7,0,0.3,1);
+            pointer-events: none;
+        }
+        #letterbox-top    { top: 0; }
+        #letterbox-bottom { bottom: 0; }
+        #letterbox-top.open, #letterbox-bottom.open { height: 10vh; }
+
+        #video-modal {
+            position: fixed; inset: 0;
+            background: rgba(234,230,223,0.98);
+            z-index: 4000;
+            display: none; justify-content: center;
+            align-items: center; flex-direction: column;
+            opacity: 0; transition: opacity 0.4s ease;
+            cursor: auto;
+        }
+        #video-modal.visible { opacity: 1; }
+        .modal-container {
+            position: relative; width: 85%; max-width: 1100px;
+            aspect-ratio: 16/9; background: #000;
+            border: 2px solid #111;
+            box-shadow: 15px 15px 0 var(--text-color);
+        }
+        #video-frame { width: 100%; height: 100%; border: none; display: block; }
+        .modal-close {
+            position: absolute; top: -45px; right: 0;
+            font-family: 'Press Start 2P', monospace; font-size: 10px;
+            color: var(--active-color); background: none; border: none;
+            cursor: pointer; text-transform: uppercase; padding: 10px;
+            letter-spacing: 1px;
+        }
+        .project-label {
+            position: absolute; bottom: -35px; left: 0;
+            font-family: "Courier New", Courier, monospace; font-size: 12px;
+            font-weight: 700; text-transform: uppercase; color: var(--text-color);
+            letter-spacing: 2px;
+        }
+
+        /* ── BADGE EDITOR POPUP ── */
+        #badge-editor {
+            position: fixed;
+            z-index: 5500;
+            background: #111;
+            border: 1px solid #444;
+            padding: 12px;
+            min-width: 200px;
+            display: none;
+            flex-direction: column;
+            gap: 6px;
+            box-shadow: 6px 6px 0 #000;
+        }
+        #badge-editor.visible { display: flex; }
+        #badge-editor-title {
+            font-family: 'Press Start 2P', monospace;
+            font-size: 7px; color: #666;
+            text-transform: uppercase; letter-spacing: 1px;
+            margin-bottom: 4px;
+        }
+        .badge-preset-btn {
+            font-family: "Courier New", Courier, monospace;
+            font-size: 9px; text-transform: uppercase;
+            letter-spacing: 1px; padding: 5px 8px;
+            background: #1a1a1a; border: 1px solid #333;
+            color: #aaa; cursor: pointer; text-align: left;
+            transition: background 0.1s, color 0.1s;
+        }
+        .badge-preset-btn:hover { background: #333; color: #fff; }
+        .badge-preset-btn.current { border-color: var(--active-color); color: var(--active-color); }
+        #badge-editor-divider {
+            height: 1px; background: #333; margin: 4px 0;
+        }
+        #badge-custom-wrap {
+            display: flex; gap: 6px; align-items: center;
+        }
+        #badge-custom-input {
+            flex: 1; background: #1a1a1a; border: 1px solid #333;
+            color: #fff; font-family: "Courier New", Courier, monospace;
+            font-size: 9px; padding: 5px 8px; text-transform: uppercase;
+            letter-spacing: 1px; outline: none;
+        }
+        #badge-custom-input:focus { border-color: var(--active-color); }
+        #badge-custom-apply {
+            font-family: 'Press Start 2P', monospace;
+            font-size: 7px; padding: 5px 8px;
+            background: var(--active-color); border: none;
+            color: #fff; cursor: pointer; letter-spacing: 1px;
+            white-space: nowrap;
+        }
+        #badge-custom-apply:hover { background: #b71c1c; }
+        #badge-editor-close {
+            font-family: "Courier New", Courier, monospace;
+            font-size: 8px; color: #555; text-align: right;
+            cursor: pointer; letter-spacing: 1px;
+            margin-top: 2px;
+        }
+        #badge-editor-close:hover { color: #999; }
+        .card-tag-badge { cursor: pointer !important; }
+        .card-tag-badge:hover { border-color: rgba(255,255,255,1) !important; color: rgba(255,255,255,1) !important; }
+
+        /* ── KONAMI / CONTRA EASTER EGG ── */
+        #konami-overlay {
+            position: fixed; inset: 0;
+            background: #000; z-index: 7500;
+            display: none; flex-direction: column;
+            justify-content: center; align-items: center;
+            opacity: 0; transition: opacity 0.3s ease;
+            cursor: none;
+        }
+        #konami-overlay.visible { opacity: 1; }
+        #konami-canvas { display: block; image-rendering: pixelated; }
+        #konami-msg {
+            font-family: 'Press Start 2P', monospace;
+            font-size: 11px; color: #fff;
+            text-align: center; margin-top: 24px;
+            letter-spacing: 2px; line-height: 2;
+        }
+        #konami-msg span { color: var(--active-color); }
+        #konami-close-hint {
+            font-family: 'Press Start 2P', monospace;
+            font-size: 7px; color: #444;
+            margin-top: 20px; letter-spacing: 1px;
+        }
+
+        /* ── RESPONSIVE ── */
+        @media (max-width: 1200px) { #tilt-container { transform: scale(0.65) rotateX(68deg); } }
+        @media (max-width: 800px)  {
+            #tilt-container { transform: scale(0.45) rotateX(68deg); }
+            .modal-container { width: 95%; }
+            .system-block { top: 20px; left: 20px; }
+        }
+        @media (max-width: 500px)  { #tilt-container { transform: scale(0.3) rotateX(68deg); } }
+    </style>
+</head>
+<body>
+
+<div id="cursor-crosshair"></div>
+
+<!-- BOOT SCREEN -->
+<div id="boot-screen">
+    <div id="boot-lines"></div>
+    <div id="boot-skip">PRESS ANY KEY TO SKIP</div>
+</div>
+
+<!-- LETTERBOX BARS -->
+<div id="letterbox-top"></div>
+<div id="letterbox-bottom"></div>
+
+<!-- HUD -->
+<div class="system-block">
+    <div class="metadata-block">
+        <div><span class="meta-label">FRAME_INDEX:</span> <span id="meta-idx" class="meta-value">01</span> / 34</div>
+        <div><span class="meta-label">CATEGORY:</span> <span id="meta-tag" class="meta-value">—</span></div>
+    </div>
+</div>
+<div class="header-block">
+    <div class="title-pixel">conor mcneilly</div>
+    <div class="subtitle-pixel">VFX Portfolio</div>
+</div>
+<div id="degree-indicator">0°</div>
+<div id="hint">
+    DRAG / SCROLL &nbsp;rotate<br>
+    ← → &nbsp;step &nbsp;|&nbsp; / &nbsp;search<br>
+    CLICK active card &nbsp;open
+</div>
+
+<!-- SEARCH OVERLAY -->
+<div id="search-overlay">
+    <div id="search-wrap">
+        <span id="search-label">SEARCH_&gt;</span>
+        <input id="search-input" type="text" placeholder="type to filter..." autocomplete="off" spellcheck="false">
+    </div>
+    <div id="search-results"></div>
+    <div id="search-esc-hint">ESC to close</div>
+</div>
+
+<!-- VIDEO MODAL -->
+<div id="video-modal" onclick="if(event.target===this)closeModal()">
+    <div class="modal-container">
+        <button class="modal-close" onclick="closeModal()">[ Close ]</button>
+        <iframe id="video-frame" src="" allow="autoplay; fullscreen" allowfullscreen></iframe>
+        <div id="modal-project-title" class="project-label">PROJECT_TITLE_ID</div>
+    </div>
+</div>
+
+<!-- KONAMI OVERLAY -->
+<div id="konami-overlay">
+    <canvas id="konami-canvas" width="320" height="200"></canvas>
+    <div id="konami-msg">30 LIVES GRANTED<br><span>↑↑↓↓←→←→ B A</span><br>CODE ACCEPTED</div>
+    <div id="konami-close-hint">PRESS ANY KEY TO CONTINUE</div>
+</div>
+
+<!-- BADGE EDITOR -->
+<div id="badge-editor">
+    <div id="badge-editor-title">SET BADGE</div>
+    <div id="badge-preset-list"></div>
+    <div id="badge-editor-divider"></div>
+    <div id="badge-custom-wrap">
+        <input id="badge-custom-input" type="text" placeholder="CUSTOM..." maxlength="16" autocomplete="off" spellcheck="false">
+        <button id="badge-custom-apply">SET</button>
+    </div>
+    <div id="badge-editor-close">[ CLOSE ]</div>
+</div>
+
+<!-- MAIN SCENE -->
+<div id="scene">
+    <div id="tilt-container">
+        <div id="selector-line"></div>
+        <div id="dial"></div>
+    </div>
+</div>
+
+<script>
+// ═══════════════════════════════════════════
+// AUDIO
+// ═══════════════════════════════════════════
+let audioCtx = null;
+function getAudioCtx() {
+    if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    return audioCtx;
+}
+function playTick() {
+    try {
+        const ctx = getAudioCtx();
+        if (ctx.state === 'suspended') ctx.resume();
+        const osc = ctx.createOscillator(), gain = ctx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(1200, ctx.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(10, ctx.currentTime + 0.05);
+        gain.gain.setValueAtTime(0.08, ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.04);
+        osc.connect(gain); gain.connect(ctx.destination);
+        osc.start(); osc.stop(ctx.currentTime + 0.05);
+    } catch(e) {}
+}
+function playBlip(freq=440, dur=0.08) {
+    try {
+        const ctx = getAudioCtx();
+        if (ctx.state === 'suspended') ctx.resume();
+        const osc = ctx.createOscillator(), gain = ctx.createGain();
+        osc.type = 'square'; osc.frequency.value = freq;
+        gain.gain.setValueAtTime(0.1, ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + dur);
+        osc.connect(gain); gain.connect(ctx.destination);
+        osc.start(); osc.stop(ctx.currentTime + dur);
+    } catch(e) {}
+}
+
+// ═══════════════════════════════════════════
+// DATA
+// ═══════════════════════════════════════════
+const TAGS = {
+    BROADCAST: 'tag-broadcast',
+    DIGITAL:   'tag-digital',
+    BRANDED:   'tag-branded',
+    SOCIAL:    'tag-social',
+    INTERNAL:  'tag-internal',
+    ANIMATION: 'tag-animation'
+};
+
+const placeholderVideo = "https://www.youtube.com/embed/tO01J-M3g0U?autoplay=1";
+const fallbackImg = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='320' height='180'%3E%3Crect width='320' height='180' fill='%23ccc'/%3E%3Ctext x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle' font-family='Courier New' font-size='11' fill='%23999'%3EIMAGE NOT FOUND%3C/text%3E%3C/svg%3E";
+
+const data = [
+    { title:"American Express - Business Platinum",   stats:"36.8 0.40 20 0.76", tag:"BROADCAST", img:"https://res.cloudinary.com/dzuuti93k/image/upload/q_auto/f_auto/v1775485963/American_Express_-_Buisness_Platinum_rq6zhl.png",        video:placeholderVideo },
+    { title:"Secret - Stay Fresher Under Pressure",   stats:"94.9 0.96 85 2.22", tag:"BROADCAST", img:"https://res.cloudinary.com/dzuuti93k/image/upload/v1775485967/Secret_-_Stay_Fresher_Under_Pressure_v6lnbv.png",                    video:placeholderVideo },
+    { title:"TD Canada - TD Playoff Advisor",          stats:"59.7 0.71 32 1.20", tag:"DIGITAL",   img:"https://res.cloudinary.com/dzuuti93k/image/upload/q_auto/f_auto/v1775485966/TD_Canada_-_TD_Playoff_Advisor_hqbeou.png",             video:placeholderVideo },
+    { title:"M&Ms - Roadtrip",                         stats:"82.5 0.89 64 1.85", tag:"BROADCAST", img:"https://res.cloudinary.com/dzuuti93k/image/upload/q_auto/f_auto/v1775485965/M_M_s_-_Road_Trip_fhvcgi.png",                         video:placeholderVideo },
+    { title:"Audible Espanol",                         stats:"91.3 0.94 76 2.10", tag:"DIGITAL",   img:"https://res.cloudinary.com/dzuuti93k/image/upload/q_auto/f_auto/v1775485963/Audible_Espanol_sxb8s2.png",                           video:placeholderVideo },
+    { title:"Doordash",                                stats:"31.4 0.35 17 0.69", tag:"SOCIAL",    img:"https://res.cloudinary.com/dzuuti93k/image/upload/q_auto/f_auto/v1775485964/DoorDash_-_Must_Ice_Cream_wf17j3.png",                  video:placeholderVideo },
+    { title:"Pizza Hut",                               stats:"76.1 0.86 50 1.72", tag:"BROADCAST", img:"https://res.cloudinary.com/dzuuti93k/image/upload/q_auto/f_auto/v1775485965/Pizza_Hut_qvs77i.png",                                 video:placeholderVideo },
+    { title:"Tim Hortons - $1 Classic Donut",          stats:"67.9 0.78 41 1.45", tag:"BROADCAST", img:"https://res.cloudinary.com/dzuuti93k/image/upload/q_auto/f_auto/v1775485967/Tim_Hortons_-_1_Classic_Donut_nvolsy.png",              video:placeholderVideo },
+    { title:"HALLS - Just Breathe Through It",         stats:"88.4 0.92 70 2.01", tag:"BROADCAST", img:"https://res.cloudinary.com/dzuuti93k/image/upload/q_auto/f_auto/v1775485964/HALLS_-_Just_Breathe_Through_It_twkozd.png",            video:placeholderVideo },
+    { title:"Hyundai",                                 stats:"45.2 0.51 24 0.95", tag:"BROADCAST", img:"https://res.cloudinary.com/dzuuti93k/image/upload/q_auto/f_auto/v1775485965/Hyundai_xisgp8.png",                                   video:placeholderVideo },
+    { title:"Coast Capital",                           stats:"22.1 0.25 11 0.45", tag:"BRANDED",   img:"https://res.cloudinary.com/dzuuti93k/image/upload/q_auto/f_auto/v1775485963/Coast_Capital_-_Get_Unstuck_imrcla.png",                video:placeholderVideo },
+    { title:"Lotto Max - Dream To The Max",            stats:"81.9 0.88 61 1.78", tag:"BROADCAST", img:"https://res.cloudinary.com/dzuuti93k/image/upload/q_auto/f_auto/v1775485965/Lotto_Max_-_Dream_To_The_Max_a1hd3t.png",               video:placeholderVideo },
+    { title:"U.S Bank - The Power of Us",              stats:"35.7 0.38 18 0.71", tag:"BROADCAST", img:fallbackImg,                                                                                                                          video:placeholderVideo },
+    { title:"Greatest Journey",                        stats:"96.2 0.98 88 2.31", tag:"ANIMATION", img:"https://res.cloudinary.com/dzuuti93k/image/upload/q_auto/f_auto/v1775485964/Greatest_Journey_xovbm0.png",                           video:placeholderVideo },
+    { title:"Delta Casino - Casino Wherever You Go",   stats:"51.4 0.58 28 1.10", tag:"DIGITAL",   img:"https://res.cloudinary.com/dzuuti93k/image/upload/q_auto/f_auto/v1775485963/Delta_Casino_-_Casino_Whereever_You_Go_skyunx.png",     video:placeholderVideo },
+    { title:"Apple - Vroom",                           stats:"68.8 0.79 43 1.50", tag:"BRANDED",   img:"https://res.cloudinary.com/dzuuti93k/image/upload/q_auto/f_auto/v1775485962/Apple_-_VROOM_mezkwj.png",                             video:placeholderVideo },
+    { title:"Seneca Polytechnic",                      stats:"54.3 0.62 30 1.15", tag:"BRANDED",   img:"https://res.cloudinary.com/dzuuti93k/image/upload/q_auto/f_auto/v1775485966/Seneca_Polytechnic_s0bju6.png",                        video:placeholderVideo },
+    { title:"Scotiabank MLSE",                         stats:"64.1 0.73 37 1.35", tag:"BROADCAST", img:"https://res.cloudinary.com/dzuuti93k/image/upload/q_auto/f_auto/v1775485966/Scotiabank_MLSE_gus9cf.png",                           video:placeholderVideo },
+    { title:"Bellwoods Brewery - Stay Classy IPA",     stats:"23.6 0.28 12 0.49", tag:"SOCIAL",    img:"https://res.cloudinary.com/dzuuti93k/image/upload/q_auto/f_auto/v1775485962/Bellwoods_Brewery_-_Stay_Classy_IPA_slzbzn.png",        video:placeholderVideo },
+    { title:"Mazda - Part of The Family",              stats:"90.5 0.93 74 2.05", tag:"BROADCAST", img:"https://res.cloudinary.com/dzuuti93k/image/upload/q_auto/f_auto/v1775485965/Mazda_-_Part_of_The_Family_einm7l.png",                 video:placeholderVideo },
+    { title:"RBC",                                     stats:"45.1 0.42 22 1.05", tag:"BROADCAST", img:"https://res.cloudinary.com/dzuuti93k/image/upload/q_auto/f_auto/v1775485966/RBC_vlfcqi.png",                                       video:placeholderVideo },
+    { title:"EGALE Canada",                            stats:"77.2 0.85 49 1.66", tag:"BRANDED",   img:"https://res.cloudinary.com/dzuuti93k/image/upload/q_auto/f_auto/v1775485964/Egale_Canada_y8ytka.png",                               video:placeholderVideo },
+    { title:"CBC - Make The Season Great",             stats:"58.6 0.69 33 1.18", tag:"BROADCAST", img:fallbackImg,                                                                                                                          video:placeholderVideo },
+    { title:"TD Insurance - It's All Good",            stats:"84.1 0.90 66 1.91", tag:"BROADCAST", img:"https://res.cloudinary.com/dzuuti93k/image/upload/q_auto/f_auto/v1775485966/TD_Insurance_-_Its_All_good_qjdlgn.png",                video:placeholderVideo },
+    { title:"Crazy D's Sparkling Prebiotic Soda",      stats:"93.5 0.95 81 2.15", tag:"SOCIAL",    img:"https://res.cloudinary.com/dzuuti93k/image/upload/q_auto/f_auto/v1775485963/Crazy_D_s_Sparkling_Prebiotic_Soda_tpmkab.png",         video:placeholderVideo },
+    { title:"Ronin Knights",                           stats:"39.4 0.39 19 0.82", tag:"ANIMATION", img:"https://res.cloudinary.com/dzuuti93k/image/upload/q_auto/f_auto/v1775485966/Ronin_Knights_evlwih.png",                             video:placeholderVideo },
+    { title:"Nespresso - What Else?",                  stats:"61.5 0.76 38 1.25", tag:"BROADCAST", img:"https://res.cloudinary.com/dzuuti93k/image/upload/q_auto/f_auto/v1775485966/Nespresso_-_What_Else_ccprno.png",                     video:placeholderVideo },
+    { title:"Nair - Simply Smooth",                    stats:"86.9 0.91 69 1.99", tag:"BROADCAST", img:"https://res.cloudinary.com/dzuuti93k/image/upload/q_auto/f_auto/v1775485965/Nair_-_Simply_Smooth_tnfd96.png",                      video:placeholderVideo },
+    { title:"Internal",                                stats:"28.3 0.31 15 0.55", tag:"INTERNAL",  img:"https://res.cloudinary.com/dzuuti93k/image/upload/q_auto/f_auto/v1775485965/Internal_cvfbtd.png",                                  video:placeholderVideo },
+    { title:"Government of Canada - Raising Eyebrows", stats:"73.2 0.81 46 1.55", tag:"BROADCAST", img:"https://res.cloudinary.com/dzuuti93k/image/upload/q_auto/f_auto/v1775485964/Government_of_Canada_-_Raising_Eyebrows_wfcy2h.png",    video:placeholderVideo },
+    { title:"Red Bank Whiskey",                        stats:"97.8 0.99 92 2.45", tag:"BRANDED",   img:"https://res.cloudinary.com/dzuuti93k/image/upload/q_auto/f_auto/v1775485966/Redbank_Whiskey_qrinee.png",                           video:placeholderVideo },
+    { title:"Creepy Bits",                             stats:"49.6 0.55 26 1.01", tag:"ANIMATION", img:"https://res.cloudinary.com/dzuuti93k/image/upload/q_auto/f_auto/v1775485963/Creepy_Bits_wxtkev.png",                               video:placeholderVideo },
+    { title:"Nestle",                                  stats:"65.3 0.75 40 1.40", tag:"BROADCAST", img:fallbackImg,                                                                                                                          video:placeholderVideo },
+    { title:"Mandys X Uber Eats",                      stats:"80.4 0.87 58 1.70", tag:"DIGITAL",   img:fallbackImg,                                                                                                                          video:placeholderVideo }
+];
+
+// ═══════════════════════════════════════════
+// BUILD DIAL
+// ═══════════════════════════════════════════
+const dial      = document.getElementById('dial');
+const itemCount = data.length;
+const radius    = 450;
+const items     = [];
+
+data.forEach((itemData, index) => {
+    const angle  = (index / itemCount) * 360;
+    const itemEl = document.createElement('div');
+    itemEl.className = 'item';
+    itemEl.style.transform = `translate(-50%,-50%) rotateZ(${angle}deg) translateY(${radius}px)`;
+
+    const img = document.createElement('img');
+    img.src = itemData.img; img.alt = itemData.title;
+    img.onerror = function(){ this.src = fallbackImg; };
+
+    const badge = document.createElement('div');
+    badge.className = 'card-tag-badge';
+    badge.textContent = itemData.tag;
+    badge.addEventListener('click', (e) => {
+        if (!itemEl.classList.contains('active')) return;
+        e.stopPropagation();
+        openBadgeEditor(index, badge, e);
+    });
+
+    const cardWrapper = document.createElement('div');
+    cardWrapper.className = 'card-wrapper';
+    cardWrapper.appendChild(img);
+    cardWrapper.appendChild(badge);
+    cardWrapper.addEventListener('click', (e) => {
+        if (e.target === badge) return; // badge click handled above
+        handleItemClick(index);
+    });
+
+    // Card tilt parallax on hover
+    cardWrapper.addEventListener('mousemove', (e) => {
+        if (!itemEl.classList.contains('active')) return;
+        const rect = cardWrapper.getBoundingClientRect();
+        const cx = rect.left + rect.width / 2;
+        const cy = rect.top  + rect.height / 2;
+        const dx = (e.clientX - cx) / (rect.width  / 2);
+        const dy = (e.clientY - cy) / (rect.height / 2);
+        const tiltX =  dy * 8;
+        const tiltY = -dx * 8;
+        cardWrapper.style.transform =
+            `translateZ(410px) rotateX(${90 + tiltX}deg) rotateY(${-65 + tiltY}deg) scale(1.2)`;
+    });
+    cardWrapper.addEventListener('mouseleave', () => {
+        cardWrapper.style.transform = '';
+    });
+
+    itemEl.innerHTML = `
+        <div class="line"></div>
+        <div class="info">
+            <div class="title">${itemData.title}</div>
+            <div class="stats">${itemData.stats}</div>
+        </div>`;
+    itemEl.insertBefore(cardWrapper, itemEl.firstChild);
+    dial.appendChild(itemEl);
+    items.push(itemEl);
+});
+
+// ═══════════════════════════════════════════
+// CURSOR
+// ═══════════════════════════════════════════
+const crosshair = document.getElementById('cursor-crosshair');
+window.addEventListener('mousemove', (e) => {
+    crosshair.style.left = e.clientX + 'px';
+    crosshair.style.top  = e.clientY + 'px';
+});
+
+// ═══════════════════════════════════════════
+// DIAL STATE
+// ═══════════════════════════════════════════
+const SELECTOR_ANGLE = 20;
+let currentRot = 0, targetRot = 0;
+let isDragging = false, isScrolling = false, scrollTimeout = null;
+let startX = 0, lastDragX = 0, dragVelocity = 0;
+let lastActiveIdx = -1;
+let dialLocked = false; // locked during boot / konami
+const scene = document.getElementById('scene');
+
+scene.addEventListener('mousedown', (e) => {
+    if (dialLocked || e.target.closest('.card-wrapper')) return;
+    isDragging = true; startX = e.clientX; lastDragX = e.clientX; dragVelocity = 0;
+});
+window.addEventListener('mouseup', () => {
+    if (isDragging) targetRot += dragVelocity * 6;
+    isDragging = false;
+});
+window.addEventListener('mousemove', (e) => {
+    if (!isDragging) return;
+    dragVelocity = e.clientX - lastDragX;
+    lastDragX = e.clientX;
+    targetRot += (e.clientX - startX) * 0.4;
+    startX = e.clientX;
+});
+scene.addEventListener('wheel', (e) => {
+    if (dialLocked) return;
+    targetRot -= e.deltaY * 0.12; targetRot -= e.deltaX * 0.12;
+    isScrolling = true; clearTimeout(scrollTimeout);
+    scrollTimeout = setTimeout(() => { isScrolling = false; }, 125);
+}, { passive: true });
+
+let touchStartX = 0, lastTouchX = 0, touchVelocity = 0;
+scene.addEventListener('touchstart', (e) => {
+    touchStartX = e.touches[0].clientX; lastTouchX = touchStartX; touchVelocity = 0;
+}, { passive:true });
+scene.addEventListener('touchmove', (e) => {
+    if (dialLocked) return;
+    touchVelocity = e.touches[0].clientX - lastTouchX;
+    lastTouchX = e.touches[0].clientX;
+    targetRot += (e.touches[0].clientX - touchStartX) * 0.4;
+    touchStartX = e.touches[0].clientX;
+}, { passive:true });
+scene.addEventListener('touchend', () => { targetRot += touchVelocity * 6; }, { passive:true });
+
+// ═══════════════════════════════════════════
+// KEYBOARD — shared handler
+// ═══════════════════════════════════════════
+document.addEventListener('keydown', (e) => {
+    // konami takes priority
+    if (konamiActive) { dismissKonami(); return; }
+    // boot skip
+    if (bootRunning) { skipBoot(); return; }
+    // badge editor — eat all keys while open except handled internally
+    if (badgeEditor.classList.contains('visible')) return;
+    // search open
+    if (e.key === '/' && !searchOpen) { e.preventDefault(); openSearch(); return; }
+    if (searchOpen) { if (e.key === 'Escape') closeSearch(); return; }
+    // modal close
+    if (e.key === 'Escape') { closeModal(); return; }
+    // konami buffer
+    handleKonamiKey(e.key);
+    // dial navigation
+    const step = 360 / itemCount;
+    if (e.key === 'ArrowRight' || e.key === 'ArrowDown') { if (!dialLocked) targetRot -= step; }
+    else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') { if (!dialLocked) targetRot += step; }
+});
+
+// ═══════════════════════════════════════════
+// ITEM CLICK / MODAL
+// ═══════════════════════════════════════════
+function handleItemClick(index) {
+    if (items[index].classList.contains('active')) {
+        const p = data[index];
+        if (p.video) openModal(p.video, p.title);
+    } else {
+        const step = 360 / itemCount;
+        targetRot = SELECTOR_ANGLE - (index * step);
+    }
+}
+
+function openModal(videoUrl, title) {
+    // letterbox first
+    document.getElementById('letterbox-top').classList.add('open');
+    document.getElementById('letterbox-bottom').classList.add('open');
+    setTimeout(() => {
+        const modal = document.getElementById('video-modal');
+        document.getElementById('modal-project-title').innerText =
+            "SOURCE_FILE: " + title.replace(/[^a-zA-Z0-9]/g,'_').toUpperCase();
+        document.getElementById('video-frame').src = videoUrl;
+        modal.style.display = 'flex';
+        requestAnimationFrame(() => requestAnimationFrame(() => modal.classList.add('visible')));
+        document.body.style.cursor = 'auto';
+    }, 380);
+}
+
+function closeModal() {
+    const modal = document.getElementById('video-modal');
+    if (!modal.classList.contains('visible')) return;
+    modal.classList.remove('visible');
+    document.getElementById('letterbox-top').classList.remove('open');
+    document.getElementById('letterbox-bottom').classList.remove('open');
+    setTimeout(() => {
+        modal.style.display = 'none';
+        document.getElementById('video-frame').src = "";
+    }, 400);
+    document.body.style.cursor = 'none';
+}
+
+// ═══════════════════════════════════════════
+// SEARCH
+// ═══════════════════════════════════════════
+let searchOpen = false;
+const searchOverlay = document.getElementById('search-overlay');
+const searchInput   = document.getElementById('search-input');
+const searchResults = document.getElementById('search-results');
+
+function openSearch() {
+    searchOpen = true;
+    searchOverlay.classList.add('visible');
+    searchInput.value = '';
+    renderSearchResults('');
+    setTimeout(() => searchInput.focus(), 50);
+    document.body.style.cursor = 'auto';
+    playBlip(600, 0.06);
+}
+function closeSearch() {
+    searchOpen = false;
+    searchOverlay.classList.remove('visible');
+    document.body.style.cursor = 'none';
+}
+searchInput.addEventListener('input', () => renderSearchResults(searchInput.value));
+
+function renderSearchResults(query) {
+    const q = query.toLowerCase().trim();
+    const matches = q === ''
+        ? data.map((d,i) => ({d,i}))
+        : data.map((d,i) => ({d,i})).filter(({d}) =>
+            d.title.toLowerCase().includes(q) || d.tag.toLowerCase().includes(q));
+    searchResults.innerHTML = '';
+    matches.forEach(({d, i}) => {
+        const row = document.createElement('div');
+        row.className = 'search-result-item';
+        row.innerHTML = `
+            <span class="sr-idx">${String(i+1).padStart(2,'0')}</span>
+            <span class="sr-title">${d.title}</span>
+            <span class="sr-tag ${TAGS[d.tag] || ''}">${d.tag}</span>`;
+        row.addEventListener('click', () => {
+            closeSearch();
+            const step = 360 / itemCount;
+            targetRot = SELECTOR_ANGLE - (i * step);
+            playBlip(800, 0.08);
+        });
+        searchResults.appendChild(row);
+    });
+    if (matches.length === 0) {
+        searchResults.innerHTML = `<div style="padding:20px 0;font-family:Courier New,monospace;font-size:11px;color:var(--text-muted);text-transform:uppercase;letter-spacing:1px;">NO RESULTS FOUND</div>`;
+    }
+}
+
+// ═══════════════════════════════════════════
+// BADGE EDITOR
+// ═══════════════════════════════════════════
+const PRESET_TAGS = ['BROADCAST','DIGITAL','BRANDED','SOCIAL','ANIMATION','INTERNAL','VFX','CG','MOTION','COLOUR'];
+const badgeEditor  = document.getElementById('badge-editor');
+const badgePresets = document.getElementById('badge-preset-list');
+const badgeInput   = document.getElementById('badge-custom-input');
+let badgeTargetIdx = -1;
+
+function openBadgeEditor(index, badgeEl, e) {
+    e.stopPropagation();
+    badgeTargetIdx = index;
+
+    // Build preset buttons
+    badgePresets.innerHTML = '';
+    PRESET_TAGS.forEach(tag => {
+        const btn = document.createElement('button');
+        btn.className = 'badge-preset-btn' + (data[index].tag === tag ? ' current' : '');
+        btn.textContent = tag;
+        btn.addEventListener('click', (ev) => {
+            ev.stopPropagation();
+            applyBadge(index, tag);
+        });
+        badgePresets.appendChild(btn);
+    });
+
+    badgeInput.value = '';
+
+    // Position near the badge — keep it on screen
+    badgeEditor.classList.add('visible');
+    const rect = badgeEl.getBoundingClientRect();
+    let x = rect.left + rect.width + 10;
+    let y = rect.top;
+    if (x + 210 > window.innerWidth)  x = rect.left - 210;
+    if (y + 260 > window.innerHeight) y = window.innerHeight - 270;
+    badgeEditor.style.left = Math.max(8, x) + 'px';
+    badgeEditor.style.top  = Math.max(8, y) + 'px';
+    document.body.style.cursor = 'auto';
+    playBlip(500, 0.05);
+}
+
+function applyBadge(index, text) {
+    const t = text.toUpperCase().trim().slice(0, 16);
+    if (!t) return;
+    data[index].tag = t;
+    // Update the live badge element on the card
+    const badge = items[index].querySelector('.card-tag-badge');
+    if (badge) badge.textContent = t;
+    // Update HUD if this card is active
+    if (lastActiveIdx === index) {
+        const tagEl = document.getElementById('meta-tag');
+        tagEl.textContent = t;
+        tagEl.className = 'meta-value ' + (TAGS[t] || '');
+    }
+    closeBadgeEditor();
+    playBlip(700, 0.07);
+}
+
+function closeBadgeEditor() {
+    badgeTargetIdx = -1;
+    badgeEditor.classList.remove('visible');
+    document.body.style.cursor = 'none';
+}
+
+document.getElementById('badge-custom-apply').addEventListener('click', (e) => {
+    e.stopPropagation();
+    if (badgeTargetIdx >= 0) applyBadge(badgeTargetIdx, badgeInput.value);
+});
+badgeInput.addEventListener('keydown', (e) => {
+    e.stopPropagation();
+    if (e.key === 'Enter' && badgeTargetIdx >= 0) applyBadge(badgeTargetIdx, badgeInput.value);
+    if (e.key === 'Escape') closeBadgeEditor();
+});
+document.getElementById('badge-editor-close').addEventListener('click', (e) => {
+    e.stopPropagation();
+    closeBadgeEditor();
+});
+// Close if clicking outside
+document.addEventListener('click', (e) => {
+    if (badgeEditor.classList.contains('visible') && !badgeEditor.contains(e.target)) {
+        closeBadgeEditor();
+    }
+});
+
+// ═══════════════════════════════════════════
+// KONAMI CODE + CONTRA ANIMATION
+// ═══════════════════════════════════════════
+const KONAMI = ['ArrowUp','ArrowUp','ArrowDown','ArrowDown','ArrowLeft','ArrowRight','ArrowLeft','ArrowRight','b','a'];
+let konamiBuffer = [];
+let konamiActive = false;
+let konamiAnimId = null;
+
+function handleKonamiKey(key) {
+    konamiBuffer.push(key);
+    if (konamiBuffer.length > KONAMI.length) konamiBuffer.shift();
+    if (konamiBuffer.join(',') === KONAMI.join(',')) {
+        konamiBuffer = [];
+        triggerKonami();
+    }
+}
+
+function triggerKonami() {
+    konamiActive = true;
+    dialLocked = true;
+    const overlay = document.getElementById('konami-overlay');
+    overlay.style.display = 'flex';
+    requestAnimationFrame(() => requestAnimationFrame(() => overlay.classList.add('visible')));
+    document.body.style.cursor = 'none';
+    startContraAnimation();
+    playBlip(262, 0.1); setTimeout(()=>playBlip(330,0.1),120); setTimeout(()=>playBlip(392,0.1),240); setTimeout(()=>playBlip(523,0.3),360);
+}
+
+function dismissKonami() {
+    konamiActive = false;
+    dialLocked = false;
+    const overlay = document.getElementById('konami-overlay');
+    overlay.classList.remove('visible');
+    setTimeout(() => { overlay.style.display = 'none'; }, 300);
+    if (konamiAnimId) { cancelAnimationFrame(konamiAnimId); konamiAnimId = null; }
+}
+
+function startContraAnimation() {
+    const canvas = document.getElementById('konami-canvas');
+    const ctx = canvas.getContext('2d');
+    const W = canvas.width, H = canvas.height;
+    const S = 4; // pixel size
+
+    // Pixel-art sprite: Contra Bill (14×20 pixels, walking frames)
+    const SPRITE = [
+        // frame 0
+        [
+            "00111100",
+            "00111100",
+            "01111110",
+            "00110100",
+            "01110110",
+            "01111110",
+            "00110100",
+            "00110100",
+            "01010100",
+            "01000100",
+        ],
+        // frame 1
+        [
+            "00111100",
+            "00111100",
+            "01111110",
+            "00110100",
+            "01111110",
+            "01110110",
+            "00110100",
+            "00110100",
+            "00100110",
+            "00100010",
+        ]
+    ];
+
+    // Enemies (little pixel blobs running opposite)
+    const enemies = Array.from({length:5}, (_,i) => ({
+        x: W + 20 + i * 60,
+        y: H/2 - 10 + (i%3)*8,
+        speed: 1.2 + i*0.3
+    }));
+
+    // Bullets
+    const bullets = [];
+    let frame = 0, tick = 0;
+    let playerX = -20;
+    let shootTimer = 0;
+
+    function drawSprite(x, y, frameIdx) {
+        ctx.fillStyle = '#ff4444';
+        const rows = SPRITE[frameIdx % 2];
+        rows.forEach((row, ry) => {
+            for (let rx = 0; rx < row.length; rx++) {
+                if (row[rx] === '1') {
+                    ctx.fillRect(x + rx*S, y + ry*S, S, S);
+                }
+            }
+        });
+    }
+
+    function drawEnemy(x, y) {
+        ctx.fillStyle = '#44ff44';
+        // simple blob
+        const blob = [
+            "0110",
+            "1111",
+            "0110",
+            "1001",
+        ];
+        blob.forEach((row, ry) => {
+            for (let rx = 0; rx < row.length; rx++) {
+                if (row[rx] === '1') ctx.fillRect(x + rx*S, y + ry*S, S, S);
+            }
+        });
+    }
+
+    function loop() {
+        if (!konamiActive) return;
+        ctx.clearRect(0, 0, W, H);
+
+        // Ground
+        ctx.fillStyle = '#1a1a1a';
+        ctx.fillRect(0, H - 6, W, 6);
+        // Sky stars
+        ctx.fillStyle = '#333';
+        for (let i = 0; i < 12; i++) {
+            ctx.fillRect(((i*57 + tick) % W), ((i*31) % (H/2)), 2, 2);
+        }
+
+        tick++;
+
+        // Player
+        playerX += 1.5;
+        if (playerX > W + 40) { playerX = -20; }
+        const py = H - 56;
+        drawSprite(playerX, py, Math.floor(tick/8) % 2);
+
+        // Shoot
+        shootTimer++;
+        if (shootTimer > 18) {
+            bullets.push({x: playerX + 36, y: py + 18});
+            shootTimer = 0;
+            playBlip(880, 0.04);
+        }
+
+        // Bullets
+        for (let i = bullets.length - 1; i >= 0; i--) {
+            bullets[i].x += 5;
+            ctx.fillStyle = '#ffff44';
+            ctx.fillRect(bullets[i].x, bullets[i].y, S, S/2);
+            if (bullets[i].x > W) bullets.splice(i, 1);
+        }
+
+        // Enemies
+        enemies.forEach((en, ei) => {
+            en.x -= en.speed;
+            if (en.x < -20) en.x = W + 20 + Math.random()*40;
+            drawEnemy(en.x, H - 38);
+            // hit check
+            for (let bi = bullets.length - 1; bi >= 0; bi--) {
+                if (Math.abs(bullets[bi].x - en.x) < 14 && Math.abs(bullets[bi].y - (H-38)) < 14) {
+                    bullets.splice(bi, 1);
+                    en.x = W + 20 + Math.random()*60;
+                    // explosion pixels
+                    ctx.fillStyle = '#ff8800';
+                    for(let ep=0;ep<6;ep++) ctx.fillRect(en.x-12+Math.random()*24, H-38+Math.random()*16, S, S);
+                    playBlip(220, 0.06);
+                }
+            }
+        });
+
+        frame++;
+        konamiAnimId = requestAnimationFrame(loop);
+    }
+    loop();
+}
+
+// ═══════════════════════════════════════════
+// BOOT SEQUENCE
+// ═══════════════════════════════════════════
+let bootRunning = true;
+const BOOT_KEY = 'cmcneilly_booted';
+const bootLines = [
+    { text: "MCNEILLY VFX SYSTEMS v2.4.1", cls: "" },
+    { text: "Copyright (C) Conor McNeilly. All rights reserved.", cls: "dim" },
+    { text: "——————————————————————————————————", cls: "dim" },
+    { text: "Initializing display driver............. OK", cls: "" },
+    { text: "Loading asset registry.................. OK", cls: "" },
+    { text: "Calibrating radial index system......... OK", cls: "" },
+    { text: "Checking frame buffers (34 entries)..... OK", cls: "" },
+    { text: "Mounting VFX archive.................... OK", cls: "" },
+    { text: "Audio subsystem......................... READY", cls: "" },
+    { text: "——————————————————————————————————", cls: "dim" },
+    { text: "WARNING: Unauthorized access prohibited.", cls: "red" },
+    { text: "——————————————————————————————————", cls: "dim" },
+    { text: "SYSTEM READY. LOADING PORTFOLIO...", cls: "red" },
+];
+
+function runBoot() {
+    const bootScreen = document.getElementById('boot-screen');
+    const linesEl    = document.getElementById('boot-lines');
+    dialLocked = true;
+    let i = 0;
+
+    function addLine() {
+        if (i >= bootLines.length) {
+            setTimeout(finishBoot, 600);
+            return;
+        }
+        const span = document.createElement('span');
+        span.className = 'line ' + bootLines[i].cls;
+        span.textContent = '> ' + bootLines[i].text;
+        // append cursor to last line
+        if (i === bootLines.length - 1) {
+            const cur = document.createElement('span');
+            cur.id = 'boot-cursor'; span.appendChild(cur);
+        }
+        linesEl.appendChild(span);
+        requestAnimationFrame(() => span.classList.add('show'));
+        playBlip(300 + Math.random()*200, 0.03);
+        i++;
+        setTimeout(addLine, 80 + Math.random() * 80);
+    }
+    addLine();
+}
+
+function finishBoot() {
+    bootRunning = false;
+    dialLocked = false;
+    const bootScreen = document.getElementById('boot-screen');
+    bootScreen.classList.add('fade-out');
+    setTimeout(() => { bootScreen.style.display = 'none'; }, 700);
+    try { localStorage.setItem(BOOT_KEY, '1'); } catch(e){}
+}
+
+function skipBoot() {
+    bootRunning = false;
+    dialLocked = false;
+    const bootScreen = document.getElementById('boot-screen');
+    bootScreen.classList.add('fade-out');
+    setTimeout(() => { bootScreen.style.display = 'none'; }, 300);
+    try { localStorage.setItem(BOOT_KEY, '1'); } catch(e){}
+}
+
+// Only show boot on first-ever visit
+try {
+    if (localStorage.getItem(BOOT_KEY)) {
+        // already booted before — skip instantly
+        document.getElementById('boot-screen').style.display = 'none';
+        bootRunning = false;
+        dialLocked = false;
+    } else {
+        runBoot();
+    }
+} catch(e) {
+    // localStorage blocked — show boot anyway
+    runBoot();
+}
+
+// ═══════════════════════════════════════════
+// MAIN ANIMATION LOOP
+// ═══════════════════════════════════════════
+function animate() {
+    const step = 360 / itemCount;
+
+    if (!isDragging && !isScrolling) {
+        let offset = (targetRot - SELECTOR_ANGLE) % step;
+        if (offset >  step/2) offset -= step;
+        if (offset < -step/2) offset += step;
+        targetRot -= offset * 0.2;
+    }
+
+    currentRot += (targetRot - currentRot) * 0.16;
+    dial.style.transform = `rotateZ(${currentRot}deg)`;
+
+    let exactIndex  = (SELECTOR_ANGLE - currentRot) / step;
+    let activeIndex = Math.round(exactIndex) % itemCount;
+    if (activeIndex < 0) activeIndex += itemCount;
+
+    if (activeIndex !== lastActiveIdx) {
+        playTick();
+        lastActiveIdx = activeIndex;
+        document.getElementById('meta-idx').innerText = String(activeIndex+1).padStart(2,'0');
+        const d = data[activeIndex];
+        const tagEl = document.getElementById('meta-tag');
+        tagEl.textContent = d.tag;
+        tagEl.className = 'meta-value ' + (TAGS[d.tag] || '');
+    }
+
+    items.forEach((item, i) => {
+        const wasActive = item.classList.contains('active');
+        const isActive  = i === activeIndex;
+        item.classList.toggle('active', isActive);
+        // if card just lost active, clear any lingering inline tilt transform
+        if (wasActive && !isActive) {
+            item.querySelector('.card-wrapper').style.transform = '';
+        }
+    });
+
+    let displayDeg = (SELECTOR_ANGLE - currentRot) % 360;
+    if (displayDeg < 0) displayDeg += 360;
+    document.getElementById('degree-indicator').innerText = Math.round(displayDeg) + '°';
+
+    requestAnimationFrame(animate);
+}
+animate();
+</script>
+</body>
+</html>
