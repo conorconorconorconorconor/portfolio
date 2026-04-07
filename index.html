@@ -250,6 +250,8 @@
             color: var(--text-muted); letter-spacing: 1px;
             transition: color 0.3s ease, font-size 0.3s ease;
         }
+        .stats .role { display: block; }
+        .stats .year { display: block; opacity: 0.6; }
         .item.active .info {
             transform: rotate(-90deg) translateX(calc(-100% - 25px)) translateY(calc(-100% - 15px)) scale(1.1);
         }
@@ -267,6 +269,72 @@
         @keyframes pulse-border {
             0%,100% { outline-color: var(--active-color); }
             50%      { outline-color: transparent; }
+        }
+
+        /* ── EMBOSSED COMING SOON CARD ── */
+        .embossed-card {
+            position: absolute; inset: 0;
+            background: #D8D4CC;
+            display: flex; align-items: center; justify-content: center;
+            transform: rotate(180deg) scaleX(-1);
+        }
+        .embossed-card span {
+            font-family: 'Press Start 2P', monospace;
+            font-size: 8px; letter-spacing: 2px;
+            text-transform: uppercase;
+            color: transparent;
+            text-shadow:
+                1px 1px 0px rgba(255,255,255,0.8),
+                -1px -1px 0px rgba(0,0,0,0.15);
+            user-select: none;
+        }
+        .item.active .embossed-card span { font-size: 10px; }
+
+        /* Coming soon modal */
+        #coming-soon-modal {
+            position: fixed; inset: 0;
+            background: rgba(234,230,223,0.98);
+            z-index: 4000;
+            display: none; flex-direction: column;
+            justify-content: center; align-items: center;
+            opacity: 0; transition: opacity 0.4s ease;
+            cursor: auto;
+        }
+        #coming-soon-modal.visible { opacity: 1; }
+        .cs-modal-inner {
+            width: 85%; max-width: 700px;
+            background: #D8D4CC;
+            border: 2px solid #111;
+            box-shadow: 15px 15px 0 var(--text-color);
+            padding: 80px 60px;
+            box-sizing: border-box;
+            display: flex; flex-direction: column;
+            align-items: center; gap: 20px;
+        }
+        .cs-modal-title {
+            font-family: 'Press Start 2P', monospace;
+            font-size: 20px; letter-spacing: 4px;
+            text-transform: uppercase;
+            color: transparent;
+            text-shadow:
+                2px 2px 0px rgba(255,255,255,0.9),
+                -1px -1px 0px rgba(0,0,0,0.12);
+        }
+        .cs-modal-project {
+            font-family: "Courier New", Courier, monospace;
+            font-size: 10px; letter-spacing: 2px;
+            text-transform: uppercase;
+            color: transparent;
+            text-shadow:
+                1px 1px 0px rgba(255,255,255,0.7),
+                -1px -1px 0px rgba(0,0,0,0.1);
+        }
+        .coming-soon-close {
+            position: absolute; top: 40px; right: 40px;
+            font-family: 'Press Start 2P', monospace;
+            font-size: 10px; color: var(--active-color);
+            background: none; border: none; cursor: pointer;
+            letter-spacing: 1px; text-transform: uppercase;
         }
 
         #selector-line {
@@ -371,7 +439,7 @@
 <!-- HUD -->
 <div class="system-block">
     <div class="metadata-block">
-        <div><span class="meta-label">FRAME_INDEX:</span> <span id="meta-idx" class="meta-value">01</span> / 34</div>
+        <div><span class="meta-label">FRAME_INDEX:</span> <span id="meta-idx" class="meta-value">01</span> / 35</div>
     </div>
 </div>
 <div class="header-block">
@@ -406,9 +474,18 @@
 
 <!-- KONAMI OVERLAY -->
 <div id="konami-overlay">
-    <canvas id="konami-canvas" width="320" height="200"></canvas>
+    <canvas id="konami-canvas" width="480" height="200"></canvas>
     <div id="konami-msg">30 LIVES GRANTED<br><span>↑↑↓↓←→←→ B A</span><br>CODE ACCEPTED</div>
     <div id="konami-close-hint">PRESS ANY KEY TO CONTINUE</div>
+</div>
+
+<!-- COMING SOON MODAL -->
+<div id="coming-soon-modal" onclick="if(event.target===this)closeComingSoon()">
+    <div class="cs-modal-inner">
+        <div class="cs-modal-title">COMING SOON</div>
+        <div id="coming-soon-project" class="cs-modal-project"></div>
+    </div>
+    <button class="coming-soon-close" onclick="closeComingSoon()">[ CLOSE ]</button>
 </div>
 
 <!-- MAIN SCENE -->
@@ -471,40 +548,41 @@ const placeholderVideo = "";
 const fallbackImg = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='320' height='180'%3E%3Crect width='320' height='180' fill='%23ccc'/%3E%3Ctext x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle' font-family='Courier New' font-size='11' fill='%23999'%3EIMAGE NOT FOUND%3C/text%3E%3C/svg%3E";
 
 const data = [
-    { title:"American Express - Business Platinum",   stats:"36.8 0.40 20 0.76", tag:"BROADCAST", img:"https://res.cloudinary.com/dzuuti93k/image/upload/q_auto/f_auto/v1775485963/American_Express_-_Buisness_Platinum_rq6zhl.png",        video:"https://player.vimeo.com/video/1000785962?autoplay=1" },
-    { title:"Secret - Stay Fresher Under Pressure",   stats:"94.9 0.96 85 2.22", tag:"BROADCAST", img:"https://res.cloudinary.com/dzuuti93k/image/upload/v1775485967/Secret_-_Stay_Fresher_Under_Pressure_v6lnbv.png",                    video:"https://player.vimeo.com/video/1101277844?h=5e91c35cdb&autoplay=1" },
-    { title:"TD Canada - TD Playoff Advisor",          stats:"59.7 0.71 32 1.20", tag:"DIGITAL",   img:"https://res.cloudinary.com/dzuuti93k/image/upload/q_auto/f_auto/v1775485966/TD_Canada_-_TD_Playoff_Advisor_hqbeou.png",             video:"https://player.vimeo.com/video/1125938314?h=9e23a42790&autoplay=1" },
-    { title:"M&Ms - Roadtrip",                         stats:"82.5 0.89 64 1.85", tag:"BROADCAST", img:"https://res.cloudinary.com/dzuuti93k/image/upload/q_auto/f_auto/v1775485965/M_M_s_-_Road_Trip_fhvcgi.png",                         video:"https://player.vimeo.com/video/1153031523?h=3aa93e5b43&autoplay=1" },
-    { title:"Audible Espanol",                         stats:"91.3 0.94 76 2.10", tag:"DIGITAL",   img:"https://res.cloudinary.com/dzuuti93k/image/upload/q_auto/f_auto/v1775485963/Audible_Espanol_sxb8s2.png",                           video:"https://player.vimeo.com/video/1153031623?h=ffd807b05e&autoplay=1" },
-    { title:"Doordash",                                stats:"31.4 0.35 17 0.69", tag:"SOCIAL",    img:"https://res.cloudinary.com/dzuuti93k/image/upload/q_auto/f_auto/v1775485964/DoorDash_-_Must_Ice_Cream_wf17j3.png",                  video:"https://player.vimeo.com/video/1128234649?autoplay=1" },
-    { title:"Pizza Hut",                               stats:"76.1 0.86 50 1.72", tag:"BROADCAST", img:"https://res.cloudinary.com/dzuuti93k/image/upload/q_auto/f_auto/v1775485965/Pizza_Hut_qvs77i.png",                                 video:"https://player.vimeo.com/video/1100398172?h=5c47516975&autoplay=1" },
-    { title:"Tim Hortons - $1 Classic Donut",          stats:"67.9 0.78 41 1.45", tag:"BROADCAST", img:"https://res.cloudinary.com/dzuuti93k/image/upload/q_auto/f_auto/v1775485967/Tim_Hortons_-_1_Classic_Donut_nvolsy.png",              video:"https://player.vimeo.com/video/1077259590?h=b1bf081af7&autoplay=1" },
-    { title:"HALLS - Just Breathe Through It",         stats:"88.4 0.92 70 2.01", tag:"BROADCAST", img:"https://res.cloudinary.com/dzuuti93k/image/upload/q_auto/f_auto/v1775485964/HALLS_-_Just_Breathe_Through_It_twkozd.png",            video:"https://player.vimeo.com/video/1036426764?h=5706bf4155&autoplay=1" },
-    { title:"Hyundai",                                 stats:"45.2 0.51 24 0.95", tag:"BROADCAST", img:"https://res.cloudinary.com/dzuuti93k/image/upload/q_auto/f_auto/v1775485965/Hyundai_xisgp8.png",                                   video:"https://www.youtube.com/embed/Uq9LR5F2HNs?autoplay=1" },
-    { title:"Coast Capital",                           stats:"22.1 0.25 11 0.45", tag:"BRANDED",   img:"https://res.cloudinary.com/dzuuti93k/image/upload/q_auto/f_auto/v1775485963/Coast_Capital_-_Get_Unstuck_imrcla.png",                video:"https://player.vimeo.com/video/1080539582?h=1a18af1670&autoplay=1" },
-    { title:"Lotto Max - Dream To The Max",            stats:"81.9 0.88 61 1.78", tag:"BROADCAST", img:"https://res.cloudinary.com/dzuuti93k/image/upload/q_auto/f_auto/v1775485965/Lotto_Max_-_Dream_To_The_Max_a1hd3t.png",               video:"https://player.vimeo.com/video/1007677871?autoplay=1" },
-    { title:"U.S Bank - The Power of Us",              stats:"35.7 0.38 18 0.71", tag:"BROADCAST", img:fallbackImg,                                                                                                                          video:"https://player.vimeo.com/video/1090962650?h=f7fcbfb447&autoplay=1" },
-    { title:"Greatest Journey",                        stats:"96.2 0.98 88 2.31", tag:"ANIMATION", img:"https://res.cloudinary.com/dzuuti93k/image/upload/q_auto/f_auto/v1775485964/Greatest_Journey_xovbm0.png",                           video:"https://player.vimeo.com/video/1016237753?h=81a30a9833&autoplay=1" },
-    { title:"Delta Casino - Casino Wherever You Go",   stats:"51.4 0.58 28 1.10", tag:"DIGITAL",   img:"https://res.cloudinary.com/dzuuti93k/image/upload/q_auto/f_auto/v1775485963/Delta_Casino_-_Casino_Whereever_You_Go_skyunx.png",     video:"https://player.vimeo.com/video/1153031849?autoplay=1" },
-    { title:"Apple - Vroom",                           stats:"68.8 0.79 43 1.50", tag:"BRANDED",   img:"https://res.cloudinary.com/dzuuti93k/image/upload/q_auto/f_auto/v1775485962/Apple_-_VROOM_mezkwj.png",                             video:"https://www.youtube.com/embed/Du1wD-vZ0RQ?autoplay=1" },
-    { title:"Seneca Polytechnic",                      stats:"54.3 0.62 30 1.15", tag:"BRANDED",   img:"https://res.cloudinary.com/dzuuti93k/image/upload/q_auto/f_auto/v1775485966/Seneca_Polytechnic_s0bju6.png",                        video:"https://player.vimeo.com/video/1051947943?h=cb672a08a6&autoplay=1" },
-    { title:"Scotiabank MLSE",                         stats:"64.1 0.73 37 1.35", tag:"BROADCAST", img:"https://res.cloudinary.com/dzuuti93k/image/upload/q_auto/f_auto/v1775485966/Scotiabank_MLSE_gus9cf.png",                           video:"https://player.vimeo.com/video/1095086532?h=baabcdb92d&autoplay=1" },
-    { title:"Bellwoods Brewery - Stay Classy IPA",     stats:"23.6 0.28 12 0.49", tag:"SOCIAL",    img:"https://res.cloudinary.com/dzuuti93k/image/upload/q_auto/f_auto/v1775485962/Bellwoods_Brewery_-_Stay_Classy_IPA_slzbzn.png",        video:"https://player.vimeo.com/video/949924833?autoplay=1" },
-    { title:"Mazda - Part of The Family",              stats:"90.5 0.93 74 2.05", tag:"BROADCAST", img:"https://res.cloudinary.com/dzuuti93k/image/upload/q_auto/f_auto/v1775485965/Mazda_-_Part_of_The_Family_einm7l.png",                 video:"https://player.vimeo.com/video/912949084?autoplay=1" },
-    { title:"RBC",                                     stats:"45.1 0.42 22 1.05", tag:"BROADCAST", img:"https://res.cloudinary.com/dzuuti93k/image/upload/q_auto/f_auto/v1775485966/RBC_vlfcqi.png",                                       video:"https://player.vimeo.com/video/1068276639?h=4aa9f47a30&autoplay=1" },
-    { title:"EGALE Canada",                            stats:"77.2 0.85 49 1.66", tag:"BRANDED",   img:"https://res.cloudinary.com/dzuuti93k/image/upload/q_auto/f_auto/v1775485964/Egale_Canada_y8ytka.png",                               video:"https://www.youtube.com/embed/y4S0pnKAPpQ?autoplay=1" },
-    { title:"CBC - Make The Season Great",             stats:"58.6 0.69 33 1.18", tag:"BROADCAST", img:fallbackImg,                                                                                                                          video:"https://www.youtube.com/embed/QSoqiAhzjdE?autoplay=1" },
-    { title:"TD Insurance - It's All Good",            stats:"84.1 0.90 66 1.91", tag:"BROADCAST", img:"https://res.cloudinary.com/dzuuti93k/image/upload/q_auto/f_auto/v1775485966/TD_Insurance_-_Its_All_good_qjdlgn.png",                video:"https://player.vimeo.com/video/963484596?autoplay=1" },
-    { title:"Crazy D's Sparkling Prebiotic Soda",      stats:"93.5 0.95 81 2.15", tag:"SOCIAL",    img:"https://res.cloudinary.com/dzuuti93k/image/upload/q_auto/f_auto/v1775485963/Crazy_D_s_Sparkling_Prebiotic_Soda_tpmkab.png",         video:"https://player.vimeo.com/video/1090215866?h=7c189c7d4a&autoplay=1" },
-    { title:"Ronin Knights",                           stats:"39.4 0.39 19 0.82", tag:"ANIMATION", img:"https://res.cloudinary.com/dzuuti93k/image/upload/q_auto/f_auto/v1775485966/Ronin_Knights_evlwih.png",                             video:"https://www.youtube.com/embed/AXbsd8NsFAI?autoplay=1" },
-    { title:"Nespresso - What Else?",                  stats:"61.5 0.76 38 1.25", tag:"BROADCAST", img:"https://res.cloudinary.com/dzuuti93k/image/upload/q_auto/f_auto/v1775485966/Nespresso_-_What_Else_ccprno.png",                     video:"https://player.vimeo.com/video/933764083?h=20486f7d2f&autoplay=1" },
-    { title:"Nair - Simply Smooth",                    stats:"86.9 0.91 69 1.99", tag:"BROADCAST", img:"https://res.cloudinary.com/dzuuti93k/image/upload/q_auto/f_auto/v1775485965/Nair_-_Simply_Smooth_tnfd96.png",                      video:"https://player.vimeo.com/video/1105153427?h=c8c56a108a&autoplay=1" },
-    { title:"Internal",                                stats:"28.3 0.31 15 0.55", tag:"INTERNAL",  img:"https://res.cloudinary.com/dzuuti93k/image/upload/q_auto/f_auto/v1775485965/Internal_cvfbtd.png",                                  video:"https://player.vimeo.com/video/917582172?h=0e6a9ffd2f&autoplay=1" },
-    { title:"Government of Canada - Raising Eyebrows", stats:"73.2 0.81 46 1.55", tag:"BROADCAST", img:"https://res.cloudinary.com/dzuuti93k/image/upload/q_auto/f_auto/v1775485964/Government_of_Canada_-_Raising_Eyebrows_wfcy2h.png",    video:"https://www.youtube.com/embed/Q5V0yap77yg?autoplay=1" },
-    { title:"Red Bank Whiskey",                        stats:"97.8 0.99 92 2.45", tag:"BRANDED",   img:"https://res.cloudinary.com/dzuuti93k/image/upload/q_auto/f_auto/v1775485966/Redbank_Whiskey_qrinee.png",                           video:"https://player.vimeo.com/video/886241578?h=107e47c8c6&autoplay=1" },
-    { title:"Creepy Bits",                             stats:"49.6 0.55 26 1.01", tag:"ANIMATION", img:"https://res.cloudinary.com/dzuuti93k/image/upload/q_auto/f_auto/v1775485963/Creepy_Bits_wxtkev.png",                               video:"https://www.youtube.com/embed/PN-3dvX-3N4?autoplay=1" },
-    { title:"Nestle",                                  stats:"65.3 0.75 40 1.40", tag:"BROADCAST", img:fallbackImg,                                                                                                                          video:"" },
-    { title:"Mandys X Uber Eats",                      stats:"80.4 0.87 58 1.70", tag:"DIGITAL",   img:fallbackImg,                                                                                                                          video:"" }
+    { title:"American Express - Business Platinum",   year:"2024", role:"Virtual Production Supervisor", tag:"BROADCAST", img:"https://res.cloudinary.com/dzuuti93k/image/upload/q_auto/f_auto/v1775485963/American_Express_-_Buisness_Platinum_rq6zhl.png",       video:"https://player.vimeo.com/video/1000785962?autoplay=1" },
+    { title:"Secret - Stay Fresher Under Pressure",   year:"2025", role:"Virtual Production Supervisor", tag:"BROADCAST", img:"https://res.cloudinary.com/dzuuti93k/image/upload/v1775485967/Secret_-_Stay_Fresher_Under_Pressure_v6lnbv.png",                   video:"https://player.vimeo.com/video/1101277844?h=5e91c35cdb&autoplay=1" },
+    { title:"TD Canada - TD Playoff Advisor",          year:"2025", role:"Virtual Production Supervisor", tag:"DIGITAL",   img:"https://res.cloudinary.com/dzuuti93k/image/upload/q_auto/f_auto/v1775485966/TD_Canada_-_TD_Playoff_Advisor_hqbeou.png",            video:"https://player.vimeo.com/video/1125938314?h=9e23a42790&autoplay=1" },
+    { title:"M&Ms - Roadtrip",                         year:"2025", role:"Virtual Production Supervisor", tag:"BROADCAST", img:"https://res.cloudinary.com/dzuuti93k/image/upload/q_auto/f_auto/v1775485965/M_M_s_-_Road_Trip_fhvcgi.png",                        video:"https://player.vimeo.com/video/1153031523?h=3aa93e5b43&autoplay=1" },
+    { title:"Audible Espanol",                         year:"2025", role:"Virtual Production Supervisor", tag:"DIGITAL",   img:"https://res.cloudinary.com/dzuuti93k/image/upload/q_auto/f_auto/v1775485963/Audible_Espanol_sxb8s2.png",                          video:"https://player.vimeo.com/video/1153031623?h=ffd807b05e&autoplay=1" },
+    { title:"Doordash",                                year:"2025", role:"Virtual Production Supervisor", tag:"SOCIAL",    img:"https://res.cloudinary.com/dzuuti93k/image/upload/q_auto/f_auto/v1775485964/DoorDash_-_Must_Ice_Cream_wf17j3.png",                 video:"https://player.vimeo.com/video/1128234649?autoplay=1" },
+    { title:"Pizza Hut",                               year:"2025", role:"Virtual Production Supervisor", tag:"BROADCAST", img:"https://res.cloudinary.com/dzuuti93k/image/upload/q_auto/f_auto/v1775485965/Pizza_Hut_qvs77i.png",                                video:"https://player.vimeo.com/video/1100398172?h=5c47516975&autoplay=1" },
+    { title:"Tim Hortons - $1 Classic Donut",          year:"2024", role:"Virtual Production Supervisor", tag:"BROADCAST", img:"https://res.cloudinary.com/dzuuti93k/image/upload/q_auto/f_auto/v1775485967/Tim_Hortons_-_1_Classic_Donut_nvolsy.png",             video:"https://player.vimeo.com/video/1077259590?h=b1bf081af7&autoplay=1" },
+    { title:"HALLS - Just Breathe Through It",         year:"2024", role:"Virtual Production Supervisor", tag:"BROADCAST", img:"https://res.cloudinary.com/dzuuti93k/image/upload/q_auto/f_auto/v1775485964/HALLS_-_Just_Breathe_Through_It_twkozd.png",           video:"https://player.vimeo.com/video/1036426764?h=5706bf4155&autoplay=1" },
+    { title:"Hyundai",                                 year:"2024", role:"Virtual Production Supervisor", tag:"BROADCAST", img:"https://res.cloudinary.com/dzuuti93k/image/upload/q_auto/f_auto/v1775485965/Hyundai_xisgp8.png",                                  video:"https://www.youtube.com/embed/Uq9LR5F2HNs?autoplay=1" },
+    { title:"Coast Capital",                           year:"2025", role:"Virtual Production Supervisor", tag:"BRANDED",   img:"https://res.cloudinary.com/dzuuti93k/image/upload/q_auto/f_auto/v1775485963/Coast_Capital_-_Get_Unstuck_imrcla.png",               video:"https://player.vimeo.com/video/1080539582?h=1a18af1670&autoplay=1" },
+    { title:"Lotto Max - Dream To The Max",            year:"2024", role:"Virtual Production Supervisor", tag:"BROADCAST", img:"https://res.cloudinary.com/dzuuti93k/image/upload/q_auto/f_auto/v1775485965/Lotto_Max_-_Dream_To_The_Max_a1hd3t.png",              video:"https://player.vimeo.com/video/1007677871?autoplay=1" },
+    { title:"U.S Bank - The Power of Us",              year:"2025", role:"Virtual Production Supervisor", tag:"BROADCAST", img:"https://res.cloudinary.com/dzuuti93k/image/upload/q_auto/f_auto/v1775583206/USBank_tspksp.png",                                   video:"https://player.vimeo.com/video/1090962650?h=f7fcbfb447&autoplay=1" },
+    { title:"Greatest Journey",                        year:"2024", role:"Virtual Production Supervisor", tag:"ANIMATION", img:"https://res.cloudinary.com/dzuuti93k/image/upload/q_auto/f_auto/v1775485964/Greatest_Journey_xovbm0.png",                          video:"https://player.vimeo.com/video/1016237753?h=81a30a9833&autoplay=1" },
+    { title:"Delta Casino - Casino Wherever You Go",   year:"2025", role:"Virtual Production Supervisor", tag:"DIGITAL",   img:"https://res.cloudinary.com/dzuuti93k/image/upload/q_auto/f_auto/v1775485963/Delta_Casino_-_Casino_Whereever_You_Go_skyunx.png",    video:"https://player.vimeo.com/video/1153031849?autoplay=1" },
+    { title:"Apple - Vroom",                           year:"2024", role:"Virtual Production Supervisor", tag:"BRANDED",   img:"https://res.cloudinary.com/dzuuti93k/image/upload/q_auto/f_auto/v1775485962/Apple_-_VROOM_mezkwj.png",                            video:"https://www.youtube.com/embed/Du1wD-vZ0RQ?autoplay=1" },
+    { title:"Seneca Polytechnic",                      year:"2025", role:"Virtual Production Supervisor", tag:"BRANDED",   img:"https://res.cloudinary.com/dzuuti93k/image/upload/q_auto/f_auto/v1775485966/Seneca_Polytechnic_s0bju6.png",                       video:"https://player.vimeo.com/video/1051947943?h=cb672a08a6&autoplay=1" },
+    { title:"Scotiabank MLSE",                         year:"2024", role:"Virtual Production Supervisor", tag:"BROADCAST", img:"https://res.cloudinary.com/dzuuti93k/image/upload/q_auto/f_auto/v1775485966/Scotiabank_MLSE_gus9cf.png",                          video:"https://player.vimeo.com/video/1095086532?h=baabcdb92d&autoplay=1" },
+    { title:"Bellwoods Brewery - Stay Classy IPA",     year:"2024", role:"Virtual Production Supervisor", tag:"SOCIAL",    img:"https://res.cloudinary.com/dzuuti93k/image/upload/q_auto/f_auto/v1775485962/Bellwoods_Brewery_-_Stay_Classy_IPA_slzbzn.png",       video:"https://player.vimeo.com/video/949924833?autoplay=1" },
+    { title:"Mazda - Part of The Family",              year:"2024", role:"Virtual Production Supervisor", tag:"BROADCAST", img:"https://res.cloudinary.com/dzuuti93k/image/upload/q_auto/f_auto/v1775485965/Mazda_-_Part_of_The_Family_einm7l.png",                video:"https://player.vimeo.com/video/912949084?autoplay=1" },
+    { title:"RBC",                                     year:"2025", role:"Virtual Production Supervisor", tag:"BROADCAST", img:"https://res.cloudinary.com/dzuuti93k/image/upload/q_auto/f_auto/v1775485966/RBC_vlfcqi.png",                                      video:"https://player.vimeo.com/video/1068276639?h=4aa9f47a30&autoplay=1" },
+    { title:"EGALE Canada",                            year:"2024", role:"Virtual Production Supervisor", tag:"BRANDED",   img:"https://res.cloudinary.com/dzuuti93k/image/upload/q_auto/f_auto/v1775485964/Egale_Canada_y8ytka.png",                              video:"https://www.youtube.com/embed/y4S0pnKAPpQ?autoplay=1" },
+    { title:"CBC - Make The Season Great",             year:"2024", role:"Virtual Production Supervisor", tag:"BROADCAST", img:"https://res.cloudinary.com/dzuuti93k/image/upload/q_auto/f_auto/v1775583206/CBC_w8sjkr.png",                                      video:"https://www.youtube.com/embed/QSoqiAhzjdE?autoplay=1" },
+    { title:"TD Insurance - It\'s All Good",           year:"2024", role:"Virtual Production Supervisor", tag:"BROADCAST", img:"https://res.cloudinary.com/dzuuti93k/image/upload/q_auto/f_auto/v1775485966/TD_Insurance_-_Its_All_good_qjdlgn.png",               video:"https://player.vimeo.com/video/963484596?autoplay=1" },
+    { title:"Crazy D\'s Sparkling Prebiotic Soda",    year:"2025", role:"Virtual Production Supervisor", tag:"SOCIAL",    img:"https://res.cloudinary.com/dzuuti93k/image/upload/q_auto/f_auto/v1775485963/Crazy_D_s_Sparkling_Prebiotic_Soda_tpmkab.png",        video:"https://player.vimeo.com/video/1090215866?h=7c189c7d4a&autoplay=1" },
+    { title:"Ronin Knights",                           year:"2024", role:"Cinematographer",               tag:"ANIMATION", img:"https://res.cloudinary.com/dzuuti93k/image/upload/q_auto/f_auto/v1775485966/Ronin_Knights_evlwih.png",                            video:"https://www.youtube.com/embed/AXbsd8NsFAI?autoplay=1" },
+    { title:"Nespresso - What Else?",                  year:"2024", role:"Virtual Production Supervisor", tag:"BROADCAST", img:"https://res.cloudinary.com/dzuuti93k/image/upload/q_auto/f_auto/v1775485966/Nespresso_-_What_Else_ccprno.png",                    video:"https://player.vimeo.com/video/933764083?h=20486f7d2f&autoplay=1" },
+    { title:"Nair - Simply Smooth",                    year:"2025", role:"Virtual Production Supervisor", tag:"BROADCAST", img:"https://res.cloudinary.com/dzuuti93k/image/upload/q_auto/f_auto/v1775485965/Nair_-_Simply_Smooth_tnfd96.png",                     video:"https://player.vimeo.com/video/1105153427?h=c8c56a108a&autoplay=1" },
+    { title:"Internal",                                year:"2024", role:"Virtual Production Supervisor", tag:"INTERNAL",  img:"https://res.cloudinary.com/dzuuti93k/image/upload/q_auto/f_auto/v1775485965/Internal_cvfbtd.png",                                 video:"https://player.vimeo.com/video/917582172?h=0e6a9ffd2f&autoplay=1" },
+    { title:"Government of Canada - Raising Eyebrows", year:"2024", role:"Virtual Production Supervisor", tag:"BROADCAST", img:"https://res.cloudinary.com/dzuuti93k/image/upload/q_auto/f_auto/v1775485964/Government_of_Canada_-_Raising_Eyebrows_wfcy2h.png",   video:"https://www.youtube.com/embed/Q5V0yap77yg?autoplay=1" },
+    { title:"Red Bank Whiskey",                        year:"2024", role:"Virtual Production Supervisor", tag:"BRANDED",   img:"https://res.cloudinary.com/dzuuti93k/image/upload/q_auto/f_auto/v1775485966/Redbank_Whiskey_qrinee.png",                          video:"https://player.vimeo.com/video/886241578?h=107e47c8c6&autoplay=1" },
+    { title:"Creepy Bits",                             year:"2024", role:"Virtual Production Supervisor", tag:"ANIMATION", img:"https://res.cloudinary.com/dzuuti93k/image/upload/q_auto/f_auto/v1775485963/Creepy_Bits_wxtkev.png",                              video:"https://www.youtube.com/embed/PN-3dvX-3N4?autoplay=1" },
+    { title:"Bush's Beans - Bush's Makes It a Meal",   year:"2025", role:"VFX Artist",                    tag:"BROADCAST", img:"https://res.cloudinary.com/dzuuti93k/image/upload/q_auto/f_auto/v1775585028/bushsbeans_y60fo9.png",                                   video:"https://player.vimeo.com/video/1180913137?autoplay=1" },
+    { title:"Nestle",                                  year:"2026", role:"VFX Artist",                    tag:"BROADCAST", img:fallbackImg, video:"", comingSoon:true },
+    { title:"Mandys X Uber Eats",                      year:"2026", role:"VFX Artist",                    tag:"DIGITAL",   img:fallbackImg, video:"", comingSoon:true }
 ];
 
 // ═══════════════════════════════════════════
@@ -527,9 +605,24 @@ data.forEach((itemData, index) => {
 
     const cardWrapper = document.createElement('div');
     cardWrapper.className = 'card-wrapper';
-    cardWrapper.appendChild(img);
+
+    if (itemData.comingSoon) {
+        const embossed = document.createElement('div');
+        embossed.className = 'embossed-card';
+        const lbl = document.createElement('span');
+        lbl.textContent = 'COMING SOON';
+        embossed.appendChild(lbl);
+        cardWrapper.appendChild(embossed);
+    } else {
+        cardWrapper.appendChild(img);
+    }
+
     cardWrapper.addEventListener('click', () => {
-        handleItemClick(index);
+        if (itemData.comingSoon) {
+            handleComingSoonClick(itemData.title);
+        } else {
+            handleItemClick(index);
+        }
     });
 
     // Card tilt parallax on hover
@@ -553,7 +646,10 @@ data.forEach((itemData, index) => {
         <div class="line"></div>
         <div class="info">
             <div class="title">${itemData.title}</div>
-            <div class="stats">${itemData.stats}</div>
+            <div class="stats">
+                <span class="role">${itemData.role}</span>
+                <span class="year">${itemData.year}</span>
+            </div>
         </div>`;
     itemEl.insertBefore(cardWrapper, itemEl.firstChild);
     dial.appendChild(itemEl);
@@ -628,7 +724,7 @@ document.addEventListener('keydown', (e) => {
     if (e.key === '/' && !searchOpen) { e.preventDefault(); openSearch(); return; }
     if (searchOpen) { if (e.key === 'Escape') closeSearch(); return; }
     // modal close
-    if (e.key === 'Escape') { closeModal(); return; }
+    if (e.key === 'Escape') { closeModal(); closeComingSoon(); return; }
     // konami buffer
     handleKonamiKey(e.key);
     // dial navigation
@@ -640,6 +736,25 @@ document.addEventListener('keydown', (e) => {
 // ═══════════════════════════════════════════
 // ITEM CLICK / MODAL
 // ═══════════════════════════════════════════
+// ═══════════════════════════════════════════
+// COMING SOON
+// ═══════════════════════════════════════════
+function handleComingSoonClick(title) {
+    const modal = document.getElementById('coming-soon-modal');
+    document.getElementById('coming-soon-project').innerText =
+        'SOURCE_FILE: ' + title.replace(/[^a-zA-Z0-9]/g,'_').toUpperCase();
+    modal.style.display = 'flex';
+    requestAnimationFrame(() => requestAnimationFrame(() => modal.classList.add('visible')));
+    document.body.style.cursor = 'auto';
+}
+
+function closeComingSoon() {
+    const modal = document.getElementById('coming-soon-modal');
+    modal.classList.remove('visible');
+    setTimeout(() => { modal.style.display = 'none'; }, 400);
+    document.body.style.cursor = 'none';
+}
+
 function handleItemClick(index) {
     if (items[index].classList.contains('active')) {
         const p = data[index];
@@ -714,8 +829,7 @@ function renderSearchResults(query) {
         row.className = 'search-result-item';
         row.innerHTML = `
             <span class="sr-idx">${String(i+1).padStart(2,'0')}</span>
-            <span class="sr-title">${d.title}</span>
-            <span class="sr-tag ${TAGS[d.tag] || ''}">${d.tag}</span>`;
+            <span class="sr-title">${d.title}</span>`;
         row.addEventListener('click', () => {
             closeSearch();
             const step = 360 / itemCount;
@@ -770,138 +884,253 @@ function startContraAnimation() {
     const canvas = document.getElementById('konami-canvas');
     const ctx = canvas.getContext('2d');
     const W = canvas.width, H = canvas.height;
-    const S = 4; // pixel size
+    const S = 4; // pixel block size
+    const FPS = 30;
+    const INTERVAL = 1000 / FPS;
+    let lastTime = 0;
 
-    // Pixel-art sprite: Contra Bill (14×20 pixels, walking frames)
-    const SPRITE = [
-        // frame 0
-        [
-            "00111100",
-            "00111100",
-            "01111110",
-            "00110100",
-            "01110110",
-            "01111110",
-            "00110100",
-            "00110100",
-            "01010100",
-            "01000100",
-        ],
-        // frame 1
-        [
-            "00111100",
-            "00111100",
-            "01111110",
-            "00110100",
-            "01111110",
-            "01110110",
-            "00110100",
-            "00110100",
-            "00100110",
-            "00100010",
-        ]
+    // ── SPRITES ──────────────────────────────
+    // Player: 2-frame walk cycle (8px wide, 10px tall @ S=4 → 32x40px)
+    const PLAYER = [
+        ["00111100",
+         "00111100",
+         "01111110",
+         "00110100",
+         "01110110",
+         "01111110",
+         "00110100",
+         "00110100",
+         "01010100",
+         "01000100"],
+        ["00111100",
+         "00111100",
+         "01111110",
+         "00110100",
+         "01111110",
+         "01110110",
+         "00110100",
+         "00110100",
+         "00100110",
+         "00100010"],
     ];
 
-    // Enemies (little pixel blobs running opposite)
-    const enemies = Array.from({length:5}, (_,i) => ({
-        x: W + 20 + i * 60,
-        y: H/2 - 10 + (i%3)*8,
-        speed: 1.2 + i*0.3
-    }));
+    // Enemy: 2-frame walk cycle (6px wide, 7px tall @ S=4 → 24x28px) — bigger target
+    const ENEMY = [
+        ["011110",
+         "111111",
+         "011110",
+         "111111",
+         "011110",
+         "101001",
+         "110011"],
+        ["011110",
+         "111111",
+         "011110",
+         "111111",
+         "011110",
+         "011010",
+         "011011"],
+    ];
 
-    // Bullets
-    const bullets = [];
-    let frame = 0, tick = 0;
-    let playerX = -20;
-    let shootTimer = 0;
+    // Explosion: 3-frame burst
+    const EXPLODE = [
+        ["010","111","010"],
+        ["101","010","101"],
+        ["001","010","100"],
+    ];
 
-    function drawSprite(x, y, frameIdx) {
-        ctx.fillStyle = '#ff4444';
-        const rows = SPRITE[frameIdx % 2];
-        rows.forEach((row, ry) => {
-            for (let rx = 0; rx < row.length; rx++) {
-                if (row[rx] === '1') {
-                    ctx.fillRect(x + rx*S, y + ry*S, S, S);
-                }
-            }
-        });
-    }
-
-    function drawEnemy(x, y) {
-        ctx.fillStyle = '#44ff44';
-        // simple blob
-        const blob = [
-            "0110",
-            "1111",
-            "0110",
-            "1001",
-        ];
-        blob.forEach((row, ry) => {
+    function drawPixels(grid, x, y, color) {
+        ctx.fillStyle = color;
+        grid.forEach((row, ry) => {
             for (let rx = 0; rx < row.length; rx++) {
                 if (row[rx] === '1') ctx.fillRect(x + rx*S, y + ry*S, S, S);
             }
         });
     }
 
-    function loop() {
-        if (!konamiActive) return;
+    // ── STATE ─────────────────────────────────
+    const GROUND_Y = H - 8;
+    const PLAYER_Y = GROUND_Y - PLAYER[0].length * S;
+    const ENEMY_H  = 7; // rows in enemy sprite
+    const ENEMY_Y  = GROUND_Y - ENEMY_H * S;
+    const BULLET_Y = ENEMY_Y + Math.floor(ENEMY_H / 2) * S; // mid-height of enemy
+
+    // Stars — fixed positions, scroll by offset
+    const STARS = Array.from({length:18}, (_, i) => ({
+        x: (i * 73) % W,
+        y: Math.floor((i * 37) % (H * 0.6)),
+        size: (i % 3) + 1,
+        speed: 0.3 + (i % 3) * 0.15,
+    }));
+
+    // Scrolling ground tiles
+    const TILES = Array.from({length: Math.ceil(W/32)+2}, (_, i) => i * 32);
+
+    // Player
+    let px = 40; // fixed x position — world scrolls past
+    let pframe = 0, pframeTick = 0;
+    const PLAYER_SPEED = 0; // player stays put, world scrolls
+
+    // Enemies — staggered evenly across the width, loop seamlessly
+    const ENEMY_COUNT = 4;
+    const enemies = Array.from({length: ENEMY_COUNT}, (_, i) => ({
+        x: W + 80 + i * (W / ENEMY_COUNT),
+        y: ENEMY_Y,
+        speed: 1.8 + i * 0.4,
+        frame: 0,
+        frameTick: 0,
+        exploding: false,
+        explodeFrame: 0,
+        explodeTick: 0,
+    }));
+
+    // Bullets
+    const bullets = [];
+    let shootTimer = 0;
+    let tick = 0;
+    let worldX = 0; // scrolling world offset
+
+    // ── DRAW ──────────────────────────────────
+    function draw() {
         ctx.clearRect(0, 0, W, H);
 
-        // Ground
-        ctx.fillStyle = '#1a1a1a';
-        ctx.fillRect(0, H - 6, W, 6);
-        // Sky stars
-        ctx.fillStyle = '#333';
-        for (let i = 0; i < 12; i++) {
-            ctx.fillRect(((i*57 + tick) % W), ((i*31) % (H/2)), 2, 2);
-        }
+        // Background
+        ctx.fillStyle = '#0a0a12';
+        ctx.fillRect(0, 0, W, H);
 
-        tick++;
+        // Stars (parallax scroll)
+        STARS.forEach(s => {
+            const sx = ((s.x - worldX * s.speed) % W + W) % W;
+            ctx.fillStyle = s.size > 2 ? '#aaaacc' : '#555577';
+            ctx.fillRect(sx, s.y, s.size, s.size);
+        });
+
+        // Scrolling ground
+        ctx.fillStyle = '#1a1a2a';
+        ctx.fillRect(0, GROUND_Y, W, H - GROUND_Y);
+        ctx.fillStyle = '#D32F2F';
+        ctx.fillRect(0, GROUND_Y, W, 2);
+
+        // Ground detail tiles
+        ctx.fillStyle = '#222233';
+        TILES.forEach(tx => {
+            const x = ((tx - worldX * 2) % (W + 32) + W + 32) % (W + 32) - 32;
+            ctx.fillRect(x, GROUND_Y + 3, 20, 2);
+        });
 
         // Player
-        playerX += 1.5;
-        if (playerX > W + 40) { playerX = -20; }
-        const py = H - 56;
-        drawSprite(playerX, py, Math.floor(tick/8) % 2);
-
-        // Shoot
-        shootTimer++;
-        if (shootTimer > 18) {
-            bullets.push({x: playerX + 36, y: py + 18});
-            shootTimer = 0;
-            playBlip(880, 0.04);
-        }
+        const pf = PLAYER[pframe];
+        drawPixels(pf, px, PLAYER_Y, '#ff5555');
+        // Gun barrel highlight
+        ctx.fillStyle = '#ffaa44';
+        ctx.fillRect(px + 7*S, PLAYER_Y + 4*S, S, S/2);
 
         // Bullets
-        for (let i = bullets.length - 1; i >= 0; i--) {
-            bullets[i].x += 5;
-            ctx.fillStyle = '#ffff44';
-            ctx.fillRect(bullets[i].x, bullets[i].y, S, S/2);
-            if (bullets[i].x > W) bullets.splice(i, 1);
-        }
+        bullets.forEach(b => {
+            ctx.fillStyle = '#ffff66';
+            ctx.fillRect(b.x, b.y, S*2, S/2);
+            // tracer trail
+            ctx.fillStyle = 'rgba(255,200,0,0.3)';
+            ctx.fillRect(b.x - S*2, b.y, S*2, S/2);
+        });
 
         // Enemies
-        enemies.forEach((en, ei) => {
-            en.x -= en.speed;
-            if (en.x < -20) en.x = W + 20 + Math.random()*40;
-            drawEnemy(en.x, H - 38);
-            // hit check
-            for (let bi = bullets.length - 1; bi >= 0; bi--) {
-                if (Math.abs(bullets[bi].x - en.x) < 14 && Math.abs(bullets[bi].y - (H-38)) < 14) {
-                    bullets.splice(bi, 1);
-                    en.x = W + 20 + Math.random()*60;
-                    // explosion pixels
-                    ctx.fillStyle = '#ff8800';
-                    for(let ep=0;ep<6;ep++) ctx.fillRect(en.x-12+Math.random()*24, H-38+Math.random()*16, S, S);
-                    playBlip(220, 0.06);
-                }
+        enemies.forEach(en => {
+            if (en.exploding) {
+                const ef = EXPLODE[Math.min(en.explodeFrame, EXPLODE.length-1)];
+                const colors = ['#ff8800','#ffff00','#ff4400'];
+                drawPixels(ef, en.x - S, en.y - S, colors[en.explodeFrame % colors.length]);
+            } else {
+                drawPixels(ENEMY[en.frame], en.x, en.y, '#44ff88');
+                // Eyes
+                ctx.fillStyle = '#ff2222';
+                ctx.fillRect(en.x + S, en.y + S, S, S);
             }
         });
 
-        frame++;
+        // HUD score-style text
+        ctx.fillStyle = 'rgba(211,47,47,0.5)';
+        ctx.font = `${S*2}px "Courier New"`;
+        ctx.fillText('30 LIVES', W - 70, 16);
+    }
+
+    // ── UPDATE ────────────────────────────────
+    function update() {
+        tick++;
+        worldX += 1.5; // world scrolls left
+
+        // Player walk animation
+        pframeTick++;
+        if (pframeTick >= 8) { pframe = 1 - pframe; pframeTick = 0; }
+
+        // Auto-shoot
+        shootTimer++;
+        if (shootTimer >= 15) {
+            bullets.push({ x: px + 8*S, y: BULLET_Y });
+            shootTimer = 0;
+            playBlip(700 + Math.random()*200, 0.03);
+        }
+
+        // Move bullets
+        for (let i = bullets.length - 1; i >= 0; i--) {
+            bullets[i].x += 8;
+            if (bullets[i].x > W + 20) bullets.splice(i, 1);
+        }
+
+        // Update enemies
+        enemies.forEach(en => {
+            if (en.exploding) {
+                en.explodeTick++;
+                if (en.explodeTick >= 4) {
+                    en.explodeFrame++;
+                    en.explodeTick = 0;
+                }
+                if (en.explodeFrame >= EXPLODE.length + 2) {
+                    // Reset enemy to right side — seamless re-entry
+                    en.x = W + 40 + Math.random() * 80;
+                    en.exploding = false;
+                    en.explodeFrame = 0;
+                }
+                return;
+            }
+
+            en.x -= en.speed;
+            en.frameTick++;
+            if (en.frameTick >= 10) { en.frame = 1 - en.frame; en.frameTick = 0; }
+
+            // Seamless loop — when off left edge, wrap to right
+            if (en.x < -20) {
+                en.x = W + 40 + Math.random() * 60;
+            }
+
+            // Bullet hit check
+            for (let bi = bullets.length - 1; bi >= 0; bi--) {
+                const b = bullets[bi];
+                if (b.x > en.x && b.x < en.x + 6*S &&
+                    b.y > en.y && b.y < en.y + ENEMY_H*S) {
+                    bullets.splice(bi, 1);
+                    en.exploding = true;
+                    en.explodeFrame = 0;
+                    en.explodeTick = 0;
+                    playBlip(180 + Math.random()*80, 0.08);
+                    break;
+                }
+            }
+        });
+    }
+
+    // ── LOOP (locked to FPS) ──────────────────
+    function loop(timestamp) {
+        if (!konamiActive) return;
+        const delta = timestamp - lastTime;
+        if (delta >= INTERVAL) {
+            lastTime = timestamp - (delta % INTERVAL);
+            update();
+            draw();
+        }
         konamiAnimId = requestAnimationFrame(loop);
     }
-    loop();
+    konamiAnimId = requestAnimationFrame(loop);
 }
 
 // ═══════════════════════════════════════════
@@ -1007,7 +1236,7 @@ function animate() {
     if (activeIndex < 0) activeIndex += itemCount;
 
     if (activeIndex !== lastActiveIdx) {
-        playTick();
+        if (lastActiveIdx !== -1) playTick();
         lastActiveIdx = activeIndex;
         document.getElementById('meta-idx').innerText = String(activeIndex+1).padStart(2,'0');
     }
