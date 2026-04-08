@@ -37,44 +37,6 @@
         #cursor-crosshair::before { width: 100%; height: 1px; top: 50%; left: 0; }
         #cursor-crosshair::after  { height: 100%; width: 1px; left: 50%; top: 0; }
 
-        /* ── BOOT SEQUENCE ── */
-        #boot-screen {
-            position: fixed; inset: 0;
-            background: #0a0a0a;
-            z-index: 8000;
-            display: flex; flex-direction: column;
-            justify-content: center; align-items: flex-start;
-            padding: 60px;
-            box-sizing: border-box;
-            transition: opacity 0.6s ease;
-        }
-        #boot-screen.fade-out { opacity: 0; pointer-events: none; }
-        #boot-lines {
-            font-family: "Courier New", Courier, monospace;
-            font-size: 11px;
-            color: #33ff33;
-            line-height: 2;
-            letter-spacing: 1px;
-            max-width: 600px;
-        }
-        #boot-lines .line { display: block; opacity: 0; }
-        #boot-lines .line.show { opacity: 1; }
-        #boot-lines .line.red { color: var(--active-color); }
-        #boot-lines .line.dim { color: #4a774a; }
-        #boot-cursor {
-            display: inline-block; width: 8px; height: 14px;
-            background: #33ff33; vertical-align: middle;
-            animation: blink 0.7s step-end infinite;
-            margin-left: 4px;
-        }
-        @keyframes blink { 50% { opacity: 0; } }
-        #boot-skip {
-            position: absolute; bottom: 40px; right: 40px;
-            font-family: 'Press Start 2P', monospace;
-            font-size: 8px; color: #2a5a2a;
-            letter-spacing: 1px;
-        }
-
         /* ── HUD ELEMENTS ── */
         .system-block {
             position: fixed; top: 40px; left: 40px;
@@ -110,6 +72,77 @@
             font-family: "Courier New", Courier, monospace;
             color: var(--active-color); z-index: 100;
             pointer-events: none; letter-spacing: 1px;
+        }
+
+        /* ── COUNTER RING ── */
+        #counter-ring {
+            position: fixed; bottom: 80px; right: 28px;
+            width: 56px; height: 56px;
+            z-index: 100; pointer-events: none;
+        }
+        #counter-ring svg { transform: rotate(-90deg); }
+        #ring-track { fill: none; stroke: var(--line-color); stroke-width: 2; }
+        #ring-fill  { fill: none; stroke: var(--active-color); stroke-width: 2;
+                      stroke-linecap: round;
+                      transition: stroke-dashoffset 0.4s cubic-bezier(0.2,0.8,0.2,1); }
+        #ring-label {
+            position: absolute; inset: 0;
+            display: flex; align-items: center; justify-content: center;
+            font-family: "Courier New", Courier, monospace;
+            font-size: 8px; color: var(--text-muted);
+            letter-spacing: 0px;
+        }
+
+        /* ── CONTACT OVERLAY ── */
+        #contact-overlay {
+            position: fixed; inset: 0;
+            background: rgba(234,230,223,0.98);
+            z-index: 6000;
+            display: none; flex-direction: column;
+            align-items: center; justify-content: center;
+            opacity: 0; transition: opacity 0.25s ease;
+        }
+        #contact-overlay.visible { opacity: 1; pointer-events: auto; }
+        .contact-inner {
+            text-align: center;
+        }
+        .contact-label {
+            font-family: "Courier New", Courier, monospace;
+            font-size: 9px; color: var(--text-muted);
+            text-transform: uppercase; letter-spacing: 3px;
+            margin-bottom: 48px;
+        }
+        .contact-name {
+            font-family: 'Press Start 2P', monospace;
+            font-size: 16px; color: #dcd8d1;
+            text-shadow: -1px -1px 0 rgba(17,17,17,0.2), 1px 1px 0 rgba(255,255,255,0.8);
+            margin-bottom: 48px;
+            letter-spacing: 2px;
+        }
+        .contact-row {
+            display: flex; align-items: center; justify-content: center;
+            gap: 20px; margin-bottom: 24px;
+        }
+        .contact-type {
+            font-family: "Courier New", Courier, monospace;
+            font-size: 9px; color: var(--text-muted);
+            text-transform: uppercase; letter-spacing: 2px;
+            min-width: 50px; text-align: right;
+        }
+        .contact-value {
+            font-family: "Courier New", Courier, monospace;
+            font-size: 16px; font-weight: 700;
+            color: var(--text-color); letter-spacing: 1px;
+            text-decoration: none;
+            border-bottom: 1px solid transparent;
+            transition: border-color 0.2s, color 0.2s;
+        }
+        .contact-value:hover { color: var(--active-color); border-color: var(--active-color); cursor: pointer; }
+        .contact-esc {
+            position: absolute; bottom: 40px; right: 40px;
+            font-family: "Courier New", Courier, monospace;
+            font-size: 9px; color: var(--text-muted);
+            text-transform: uppercase; letter-spacing: 1.5px;
         }
         #hint {
             position: fixed; bottom: 40px; left: 40px;
@@ -225,6 +258,20 @@
             transition: filter 0.4s ease;
             pointer-events: none;
         }
+        .card-tag-badge {
+            position: absolute; bottom: 6px; right: 6px;
+            font-family: "Courier New", Courier, monospace;
+            font-size: 7px; padding: 2px 5px;
+            border: 1px solid rgba(255,255,255,0.6);
+            color: rgba(255,255,255,0.85);
+            background: rgba(0,0,0,0.4);
+            letter-spacing: 1px; text-transform: uppercase;
+            pointer-events: none;
+            transform: scaleX(-1) rotate(180deg);
+            transform-origin: center center;
+            opacity: 0; transition: opacity 0.3s ease;
+        }
+        .item.active .card-tag-badge { opacity: 1; }
         .line {
             position: absolute; left: -1px; top: -450px;
             width: 1px; height: 750px;
@@ -271,7 +318,65 @@
             50%      { outline-color: transparent; }
         }
 
-        /* ── EMBOSSED COMING SOON CARD ── */
+        /* ── DRAGGABLE DOSSIER ── */
+        #dossier {
+            position: fixed;
+            z-index: 4500;
+            width: 220px;
+            background: #f5f1ea;
+            border: 1px solid #111;
+            box-shadow: 4px 4px 0 #111;
+            display: none;
+            flex-direction: column;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            cursor: auto;
+            user-select: none;
+        }
+        #dossier.visible { opacity: 1; }
+        #dossier-titlebar {
+            background: #111;
+            padding: 6px 10px;
+            display: flex; align-items: center;
+            justify-content: space-between;
+            cursor: grab;
+        }
+        #dossier-titlebar:active { cursor: grabbing; }
+        #dossier-filename {
+            font-family: "Courier New", Courier, monospace;
+            font-size: 8px; color: #fff;
+            text-transform: uppercase; letter-spacing: 1px;
+            white-space: nowrap; overflow: hidden;
+            text-overflow: ellipsis; max-width: 160px;
+        }
+        #dossier-close-btn {
+            font-family: "Courier New", Courier, monospace;
+            font-size: 9px; color: var(--active-color);
+            cursor: pointer; background: none; border: none;
+            padding: 0; line-height: 1; flex-shrink: 0;
+        }
+        #dossier-close-btn:hover { color: #fff; }
+        #dossier-body {
+            padding: 12px 14px;
+            display: flex; flex-direction: column; gap: 10px;
+        }
+        .dossier-row {
+            display: flex; flex-direction: column; gap: 2px;
+        }
+        .dossier-label {
+            font-family: "Courier New", Courier, monospace;
+            font-size: 7px; color: var(--text-muted);
+            text-transform: uppercase; letter-spacing: 2px;
+        }
+        .dossier-value {
+            font-family: "Courier New", Courier, monospace;
+            font-size: 10px; color: var(--text-color);
+            font-weight: 700; letter-spacing: 0.5px;
+            text-transform: uppercase;
+        }
+        .dossier-divider {
+            height: 1px; background: #ccc;
+        }
         .embossed-card {
             position: absolute; inset: 0;
             background: #D8D4CC;
@@ -426,12 +531,6 @@
 
 <div id="cursor-crosshair"></div>
 
-<!-- BOOT SCREEN -->
-<div id="boot-screen">
-    <div id="boot-lines"></div>
-    <div id="boot-skip">PRESS ANY KEY TO SKIP</div>
-</div>
-
 <!-- LETTERBOX BARS -->
 <div id="letterbox-top"></div>
 <div id="letterbox-bottom"></div>
@@ -439,7 +538,7 @@
 <!-- HUD -->
 <div class="system-block">
     <div class="metadata-block">
-        <div><span class="meta-label">FRAME_INDEX:</span> <span id="meta-idx" class="meta-value">01</span> / 35</div>
+        <div><span class="meta-label">FRAME_INDEX:</span> <span id="meta-idx" class="meta-value">01</span> / 37</div>
     </div>
 </div>
 <div class="header-block">
@@ -447,10 +546,36 @@
     <div class="subtitle-pixel">VFX Portfolio</div>
 </div>
 <div id="degree-indicator">0°</div>
+
+<!-- COUNTER RING -->
+<div id="counter-ring">
+    <svg width="56" height="56" viewBox="0 0 56 56">
+        <circle id="ring-track" cx="28" cy="28" r="24"/>
+        <circle id="ring-fill"  cx="28" cy="28" r="24"/>
+    </svg>
+    <div id="ring-label">0</div>
+</div>
+
+<!-- CONTACT OVERLAY -->
+<div id="contact-overlay">
+    <div class="contact-inner">
+        <div class="contact-label">// GET IN TOUCH //</div>
+        <div class="contact-name">conor mcneilly</div>
+        <div class="contact-row">
+            <span class="contact-type">CELL</span>
+            <a class="contact-value" href="tel:7053053887">705 305 3887</a>
+        </div>
+        <div class="contact-row">
+            <span class="contact-type">EMAIL</span>
+            <a class="contact-value" id="contact-email" href="#">conormcneilly7 [at] gmail.com</a>
+        </div>
+    </div>
+    <div class="contact-esc">ESC to close</div>
+</div>
 <div id="hint">
     DRAG / SCROLL &nbsp;rotate<br>
     ← → &nbsp;step &nbsp;|&nbsp; / &nbsp;search<br>
-    CLICK active card &nbsp;open
+    CLICK active card &nbsp;open &nbsp;|&nbsp; ? &nbsp;contact
 </div>
 
 <!-- SEARCH OVERLAY -->
@@ -475,7 +600,7 @@
 <!-- KONAMI OVERLAY -->
 <div id="konami-overlay">
     <canvas id="konami-canvas" width="480" height="200"></canvas>
-    <div id="konami-msg">30 LIVES GRANTED<br><span>↑↑↓↓←→←→ B A</span><br>CODE ACCEPTED</div>
+    <div id="konami-msg">You did it. You found the secret.<br>Now go back and look at my work<br><span>you goober.</span></div>
     <div id="konami-close-hint">PRESS ANY KEY TO CONTINUE</div>
 </div>
 
@@ -486,6 +611,33 @@
         <div id="coming-soon-project" class="cs-modal-project"></div>
     </div>
     <button class="coming-soon-close" onclick="closeComingSoon()">[ CLOSE ]</button>
+</div>
+
+<!-- PROJECT DOSSIER -->
+<div id="dossier">
+    <div id="dossier-titlebar">
+        <span id="dossier-filename">PROJECT_INFO.TXT</span>
+        <button id="dossier-close-btn" onclick="closeDossier()">✕</button>
+    </div>
+    <div id="dossier-body">
+        <div class="dossier-row">
+            <span class="dossier-label">Project</span>
+            <span class="dossier-value" id="dossier-title">—</span>
+        </div>
+        <div class="dossier-divider"></div>
+        <div class="dossier-row">
+            <span class="dossier-label">Type</span>
+            <span class="dossier-value" id="dossier-badge">—</span>
+        </div>
+        <div class="dossier-row">
+            <span class="dossier-label">Year</span>
+            <span class="dossier-value" id="dossier-year">—</span>
+        </div>
+        <div class="dossier-row">
+            <span class="dossier-label">Role</span>
+            <span class="dossier-value" id="dossier-role">—</span>
+        </div>
+    </div>
 </div>
 
 <!-- MAIN SCENE -->
@@ -548,41 +700,43 @@ const placeholderVideo = "";
 const fallbackImg = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='320' height='180'%3E%3Crect width='320' height='180' fill='%23ccc'/%3E%3Ctext x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle' font-family='Courier New' font-size='11' fill='%23999'%3EIMAGE NOT FOUND%3C/text%3E%3C/svg%3E";
 
 const data = [
-    { title:"American Express - Business Platinum",   year:"2024", role:"Virtual Production Supervisor", tag:"BROADCAST", img:"https://res.cloudinary.com/dzuuti93k/image/upload/q_auto/f_auto/v1775485963/American_Express_-_Buisness_Platinum_rq6zhl.png",       video:"https://player.vimeo.com/video/1000785962?autoplay=1" },
-    { title:"Secret - Stay Fresher Under Pressure",   year:"2025", role:"Virtual Production Supervisor", tag:"BROADCAST", img:"https://res.cloudinary.com/dzuuti93k/image/upload/v1775485967/Secret_-_Stay_Fresher_Under_Pressure_v6lnbv.png",                   video:"https://player.vimeo.com/video/1101277844?h=5e91c35cdb&autoplay=1" },
-    { title:"TD Canada - TD Playoff Advisor",          year:"2025", role:"Virtual Production Supervisor", tag:"DIGITAL",   img:"https://res.cloudinary.com/dzuuti93k/image/upload/q_auto/f_auto/v1775485966/TD_Canada_-_TD_Playoff_Advisor_hqbeou.png",            video:"https://player.vimeo.com/video/1125938314?h=9e23a42790&autoplay=1" },
-    { title:"M&Ms - Roadtrip",                         year:"2025", role:"Virtual Production Supervisor", tag:"BROADCAST", img:"https://res.cloudinary.com/dzuuti93k/image/upload/q_auto/f_auto/v1775485965/M_M_s_-_Road_Trip_fhvcgi.png",                        video:"https://player.vimeo.com/video/1153031523?h=3aa93e5b43&autoplay=1" },
-    { title:"Audible Espanol",                         year:"2025", role:"Virtual Production Supervisor", tag:"DIGITAL",   img:"https://res.cloudinary.com/dzuuti93k/image/upload/q_auto/f_auto/v1775485963/Audible_Espanol_sxb8s2.png",                          video:"https://player.vimeo.com/video/1153031623?h=ffd807b05e&autoplay=1" },
-    { title:"Doordash",                                year:"2025", role:"Virtual Production Supervisor", tag:"SOCIAL",    img:"https://res.cloudinary.com/dzuuti93k/image/upload/q_auto/f_auto/v1775485964/DoorDash_-_Must_Ice_Cream_wf17j3.png",                 video:"https://player.vimeo.com/video/1128234649?autoplay=1" },
-    { title:"Pizza Hut",                               year:"2025", role:"Virtual Production Supervisor", tag:"BROADCAST", img:"https://res.cloudinary.com/dzuuti93k/image/upload/q_auto/f_auto/v1775485965/Pizza_Hut_qvs77i.png",                                video:"https://player.vimeo.com/video/1100398172?h=5c47516975&autoplay=1" },
-    { title:"Tim Hortons - $1 Classic Donut",          year:"2024", role:"Virtual Production Supervisor", tag:"BROADCAST", img:"https://res.cloudinary.com/dzuuti93k/image/upload/q_auto/f_auto/v1775485967/Tim_Hortons_-_1_Classic_Donut_nvolsy.png",             video:"https://player.vimeo.com/video/1077259590?h=b1bf081af7&autoplay=1" },
-    { title:"HALLS - Just Breathe Through It",         year:"2024", role:"Virtual Production Supervisor", tag:"BROADCAST", img:"https://res.cloudinary.com/dzuuti93k/image/upload/q_auto/f_auto/v1775485964/HALLS_-_Just_Breathe_Through_It_twkozd.png",           video:"https://player.vimeo.com/video/1036426764?h=5706bf4155&autoplay=1" },
-    { title:"Hyundai",                                 year:"2024", role:"Virtual Production Supervisor", tag:"BROADCAST", img:"https://res.cloudinary.com/dzuuti93k/image/upload/q_auto/f_auto/v1775485965/Hyundai_xisgp8.png",                                  video:"https://www.youtube.com/embed/Uq9LR5F2HNs?autoplay=1" },
-    { title:"Coast Capital",                           year:"2025", role:"Virtual Production Supervisor", tag:"BRANDED",   img:"https://res.cloudinary.com/dzuuti93k/image/upload/q_auto/f_auto/v1775485963/Coast_Capital_-_Get_Unstuck_imrcla.png",               video:"https://player.vimeo.com/video/1080539582?h=1a18af1670&autoplay=1" },
-    { title:"Lotto Max - Dream To The Max",            year:"2024", role:"Virtual Production Supervisor", tag:"BROADCAST", img:"https://res.cloudinary.com/dzuuti93k/image/upload/q_auto/f_auto/v1775485965/Lotto_Max_-_Dream_To_The_Max_a1hd3t.png",              video:"https://player.vimeo.com/video/1007677871?autoplay=1" },
-    { title:"U.S Bank - The Power of Us",              year:"2025", role:"Virtual Production Supervisor", tag:"BROADCAST", img:"https://res.cloudinary.com/dzuuti93k/image/upload/q_auto/f_auto/v1775583206/USBank_tspksp.png",                                   video:"https://player.vimeo.com/video/1090962650?h=f7fcbfb447&autoplay=1" },
-    { title:"Greatest Journey",                        year:"2024", role:"Virtual Production Supervisor", tag:"ANIMATION", img:"https://res.cloudinary.com/dzuuti93k/image/upload/q_auto/f_auto/v1775485964/Greatest_Journey_xovbm0.png",                          video:"https://player.vimeo.com/video/1016237753?h=81a30a9833&autoplay=1" },
-    { title:"Delta Casino - Casino Wherever You Go",   year:"2025", role:"Virtual Production Supervisor", tag:"DIGITAL",   img:"https://res.cloudinary.com/dzuuti93k/image/upload/q_auto/f_auto/v1775485963/Delta_Casino_-_Casino_Whereever_You_Go_skyunx.png",    video:"https://player.vimeo.com/video/1153031849?autoplay=1" },
-    { title:"Apple - Vroom",                           year:"2024", role:"Virtual Production Supervisor", tag:"BRANDED",   img:"https://res.cloudinary.com/dzuuti93k/image/upload/q_auto/f_auto/v1775485962/Apple_-_VROOM_mezkwj.png",                            video:"https://www.youtube.com/embed/Du1wD-vZ0RQ?autoplay=1" },
-    { title:"Seneca Polytechnic",                      year:"2025", role:"Virtual Production Supervisor", tag:"BRANDED",   img:"https://res.cloudinary.com/dzuuti93k/image/upload/q_auto/f_auto/v1775485966/Seneca_Polytechnic_s0bju6.png",                       video:"https://player.vimeo.com/video/1051947943?h=cb672a08a6&autoplay=1" },
-    { title:"Scotiabank MLSE",                         year:"2024", role:"Virtual Production Supervisor", tag:"BROADCAST", img:"https://res.cloudinary.com/dzuuti93k/image/upload/q_auto/f_auto/v1775485966/Scotiabank_MLSE_gus9cf.png",                          video:"https://player.vimeo.com/video/1095086532?h=baabcdb92d&autoplay=1" },
-    { title:"Bellwoods Brewery - Stay Classy IPA",     year:"2024", role:"Virtual Production Supervisor", tag:"SOCIAL",    img:"https://res.cloudinary.com/dzuuti93k/image/upload/q_auto/f_auto/v1775485962/Bellwoods_Brewery_-_Stay_Classy_IPA_slzbzn.png",       video:"https://player.vimeo.com/video/949924833?autoplay=1" },
-    { title:"Mazda - Part of The Family",              year:"2024", role:"Virtual Production Supervisor", tag:"BROADCAST", img:"https://res.cloudinary.com/dzuuti93k/image/upload/q_auto/f_auto/v1775485965/Mazda_-_Part_of_The_Family_einm7l.png",                video:"https://player.vimeo.com/video/912949084?autoplay=1" },
-    { title:"RBC",                                     year:"2025", role:"Virtual Production Supervisor", tag:"BROADCAST", img:"https://res.cloudinary.com/dzuuti93k/image/upload/q_auto/f_auto/v1775485966/RBC_vlfcqi.png",                                      video:"https://player.vimeo.com/video/1068276639?h=4aa9f47a30&autoplay=1" },
-    { title:"EGALE Canada",                            year:"2024", role:"Virtual Production Supervisor", tag:"BRANDED",   img:"https://res.cloudinary.com/dzuuti93k/image/upload/q_auto/f_auto/v1775485964/Egale_Canada_y8ytka.png",                              video:"https://www.youtube.com/embed/y4S0pnKAPpQ?autoplay=1" },
-    { title:"CBC - Make The Season Great",             year:"2024", role:"Virtual Production Supervisor", tag:"BROADCAST", img:"https://res.cloudinary.com/dzuuti93k/image/upload/q_auto/f_auto/v1775583206/CBC_w8sjkr.png",                                      video:"https://www.youtube.com/embed/QSoqiAhzjdE?autoplay=1" },
-    { title:"TD Insurance - It\'s All Good",           year:"2024", role:"Virtual Production Supervisor", tag:"BROADCAST", img:"https://res.cloudinary.com/dzuuti93k/image/upload/q_auto/f_auto/v1775485966/TD_Insurance_-_Its_All_good_qjdlgn.png",               video:"https://player.vimeo.com/video/963484596?autoplay=1" },
-    { title:"Crazy D\'s Sparkling Prebiotic Soda",    year:"2025", role:"Virtual Production Supervisor", tag:"SOCIAL",    img:"https://res.cloudinary.com/dzuuti93k/image/upload/q_auto/f_auto/v1775485963/Crazy_D_s_Sparkling_Prebiotic_Soda_tpmkab.png",        video:"https://player.vimeo.com/video/1090215866?h=7c189c7d4a&autoplay=1" },
-    { title:"Ronin Knights",                           year:"2024", role:"Cinematographer",               tag:"ANIMATION", img:"https://res.cloudinary.com/dzuuti93k/image/upload/q_auto/f_auto/v1775485966/Ronin_Knights_evlwih.png",                            video:"https://www.youtube.com/embed/AXbsd8NsFAI?autoplay=1" },
-    { title:"Nespresso - What Else?",                  year:"2024", role:"Virtual Production Supervisor", tag:"BROADCAST", img:"https://res.cloudinary.com/dzuuti93k/image/upload/q_auto/f_auto/v1775485966/Nespresso_-_What_Else_ccprno.png",                    video:"https://player.vimeo.com/video/933764083?h=20486f7d2f&autoplay=1" },
-    { title:"Nair - Simply Smooth",                    year:"2025", role:"Virtual Production Supervisor", tag:"BROADCAST", img:"https://res.cloudinary.com/dzuuti93k/image/upload/q_auto/f_auto/v1775485965/Nair_-_Simply_Smooth_tnfd96.png",                     video:"https://player.vimeo.com/video/1105153427?h=c8c56a108a&autoplay=1" },
-    { title:"Internal",                                year:"2024", role:"Virtual Production Supervisor", tag:"INTERNAL",  img:"https://res.cloudinary.com/dzuuti93k/image/upload/q_auto/f_auto/v1775485965/Internal_cvfbtd.png",                                 video:"https://player.vimeo.com/video/917582172?h=0e6a9ffd2f&autoplay=1" },
-    { title:"Government of Canada - Raising Eyebrows", year:"2024", role:"Virtual Production Supervisor", tag:"BROADCAST", img:"https://res.cloudinary.com/dzuuti93k/image/upload/q_auto/f_auto/v1775485964/Government_of_Canada_-_Raising_Eyebrows_wfcy2h.png",   video:"https://www.youtube.com/embed/Q5V0yap77yg?autoplay=1" },
-    { title:"Red Bank Whiskey",                        year:"2024", role:"Virtual Production Supervisor", tag:"BRANDED",   img:"https://res.cloudinary.com/dzuuti93k/image/upload/q_auto/f_auto/v1775485966/Redbank_Whiskey_qrinee.png",                          video:"https://player.vimeo.com/video/886241578?h=107e47c8c6&autoplay=1" },
-    { title:"Creepy Bits",                             year:"2024", role:"Virtual Production Supervisor", tag:"ANIMATION", img:"https://res.cloudinary.com/dzuuti93k/image/upload/q_auto/f_auto/v1775485963/Creepy_Bits_wxtkev.png",                              video:"https://www.youtube.com/embed/PN-3dvX-3N4?autoplay=1" },
-    { title:"Bush's Beans - Bush's Makes It a Meal",   year:"2025", role:"VFX Artist",                    tag:"BROADCAST", img:"https://res.cloudinary.com/dzuuti93k/image/upload/q_auto/f_auto/v1775585028/bushsbeans_y60fo9.png",                                   video:"https://player.vimeo.com/video/1180913137?autoplay=1" },
-    { title:"Nestle",                                  year:"2026", role:"VFX Artist",                    tag:"BROADCAST", img:fallbackImg, video:"", comingSoon:true },
-    { title:"Mandys X Uber Eats",                      year:"2026", role:"VFX Artist",                    tag:"DIGITAL",   img:fallbackImg, video:"", comingSoon:true }
+    { title:"American Express - Business Platinum",   year:"2024", role:"Virtual Production Supervisor", tag:"BROADCAST", img:"https://res.cloudinary.com/dzuuti93k/image/upload/q_auto/f_auto/v1775485963/American_Express_-_Buisness_Platinum_rq6zhl.png",       video:"https://player.vimeo.com/video/1000785962?autoplay=1" , badge:"COMMERCIAL" },
+    { title:"Secret - Stay Fresher Under Pressure",   year:"2025", role:"Virtual Production Supervisor", tag:"BROADCAST", img:"https://res.cloudinary.com/dzuuti93k/image/upload/v1775485967/Secret_-_Stay_Fresher_Under_Pressure_v6lnbv.png",                   video:"https://player.vimeo.com/video/1101277844?h=5e91c35cdb&autoplay=1" , badge:"COMMERCIAL" },
+    { title:"TD Canada - TD Playoff Advisor",          year:"2025", role:"Virtual Production Supervisor", tag:"DIGITAL",   img:"https://res.cloudinary.com/dzuuti93k/image/upload/q_auto/f_auto/v1775485966/TD_Canada_-_TD_Playoff_Advisor_hqbeou.png",            video:"https://player.vimeo.com/video/1125938314?h=9e23a42790&autoplay=1" , badge:"COMMERCIAL" },
+    { title:"M&Ms - Roadtrip",                         year:"2025", role:"Virtual Production Supervisor", tag:"BROADCAST", img:"https://res.cloudinary.com/dzuuti93k/image/upload/q_auto/f_auto/v1775485965/M_M_s_-_Road_Trip_fhvcgi.png",                        video:"https://player.vimeo.com/video/1153031523?h=3aa93e5b43&autoplay=1" , badge:"COMMERCIAL" },
+    { title:"Audible Espanol",                         year:"2025", role:"Virtual Production Supervisor", tag:"DIGITAL",   img:"https://res.cloudinary.com/dzuuti93k/image/upload/q_auto/f_auto/v1775485963/Audible_Espanol_sxb8s2.png",                          video:"https://player.vimeo.com/video/1153031623?h=ffd807b05e&autoplay=1" , badge:"COMMERCIAL" },
+    { title:"Doordash",                                year:"2025", role:"Virtual Production Supervisor", tag:"SOCIAL",    img:"https://res.cloudinary.com/dzuuti93k/image/upload/q_auto/f_auto/v1775485964/DoorDash_-_Must_Ice_Cream_wf17j3.png",                 video:"https://player.vimeo.com/video/1128234649?autoplay=1" , badge:"COMMERCIAL" },
+    { title:"Pizza Hut",                               year:"2025", role:"Virtual Production Supervisor", tag:"BROADCAST", img:"https://res.cloudinary.com/dzuuti93k/image/upload/q_auto/f_auto/v1775485965/Pizza_Hut_qvs77i.png",                                video:"https://player.vimeo.com/video/1100398172?h=5c47516975&autoplay=1" , badge:"COMMERCIAL" },
+    { title:"Tim Hortons - $1 Classic Donut",          year:"2024", role:"Virtual Production Supervisor", tag:"BROADCAST", img:"https://res.cloudinary.com/dzuuti93k/image/upload/q_auto/f_auto/v1775485967/Tim_Hortons_-_1_Classic_Donut_nvolsy.png",             video:"https://player.vimeo.com/video/1077259590?h=b1bf081af7&autoplay=1" , badge:"COMMERCIAL" },
+    { title:"HALLS - Just Breathe Through It",         year:"2024", role:"Virtual Production Supervisor", tag:"BROADCAST", img:"https://res.cloudinary.com/dzuuti93k/image/upload/q_auto/f_auto/v1775485964/HALLS_-_Just_Breathe_Through_It_twkozd.png",           video:"https://player.vimeo.com/video/1036426764?h=5706bf4155&autoplay=1" , badge:"COMMERCIAL" },
+    { title:"Hyundai",                                 year:"2024", role:"Virtual Production Supervisor", tag:"BROADCAST", img:"https://res.cloudinary.com/dzuuti93k/image/upload/q_auto/f_auto/v1775485965/Hyundai_xisgp8.png",                                  video:"https://www.youtube.com/embed/Uq9LR5F2HNs?autoplay=1" , badge:"COMMERCIAL" },
+    { title:"Coast Capital",                           year:"2025", role:"Virtual Production Supervisor", tag:"BRANDED",   img:"https://res.cloudinary.com/dzuuti93k/image/upload/q_auto/f_auto/v1775485963/Coast_Capital_-_Get_Unstuck_imrcla.png",               video:"https://player.vimeo.com/video/1080539582?h=1a18af1670&autoplay=1" , badge:"COMMERCIAL" },
+    { title:"Lotto Max - Dream To The Max",            year:"2024", role:"Virtual Production Supervisor", tag:"BROADCAST", img:"https://res.cloudinary.com/dzuuti93k/image/upload/q_auto/f_auto/v1775485965/Lotto_Max_-_Dream_To_The_Max_a1hd3t.png",              video:"https://player.vimeo.com/video/1007677871?autoplay=1" , badge:"COMMERCIAL" },
+    { title:"U.S Bank - The Power of Us",              year:"2025", role:"Virtual Production Supervisor", tag:"BROADCAST", img:"https://res.cloudinary.com/dzuuti93k/image/upload/q_auto/f_auto/v1775583206/USBank_tspksp.png",                                   video:"https://player.vimeo.com/video/1090962650?h=f7fcbfb447&autoplay=1" , badge:"COMMERCIAL" },
+    { title:"Greatest Journey",                        year:"2024", role:"Virtual Production Supervisor", tag:"ANIMATION", img:"https://res.cloudinary.com/dzuuti93k/image/upload/q_auto/f_auto/v1775485964/Greatest_Journey_xovbm0.png",                          video:"https://player.vimeo.com/video/1016237753?h=81a30a9833&autoplay=1" , badge:"COMMERCIAL" },
+    { title:"Delta Casino - Casino Wherever You Go",   year:"2025", role:"Virtual Production Supervisor", tag:"DIGITAL",   img:"https://res.cloudinary.com/dzuuti93k/image/upload/q_auto/f_auto/v1775485963/Delta_Casino_-_Casino_Whereever_You_Go_skyunx.png",    video:"https://player.vimeo.com/video/1153031849?autoplay=1" , badge:"COMMERCIAL" },
+    { title:"Apple - Vroom",                           year:"2024", role:"Virtual Production Supervisor", tag:"BRANDED",   img:"https://res.cloudinary.com/dzuuti93k/image/upload/q_auto/f_auto/v1775485962/Apple_-_VROOM_mezkwj.png",                            video:"https://www.youtube.com/embed/Du1wD-vZ0RQ?autoplay=1" , badge:"COMMERCIAL" },
+    { title:"Seneca Polytechnic",                      year:"2025", role:"Virtual Production Supervisor", tag:"BRANDED",   img:"https://res.cloudinary.com/dzuuti93k/image/upload/q_auto/f_auto/v1775485966/Seneca_Polytechnic_s0bju6.png",                       video:"https://player.vimeo.com/video/1051947943?h=cb672a08a6&autoplay=1" , badge:"COMMERCIAL" },
+    { title:"Scotiabank MLSE",                         year:"2024", role:"Virtual Production Supervisor", tag:"BROADCAST", img:"https://res.cloudinary.com/dzuuti93k/image/upload/q_auto/f_auto/v1775485966/Scotiabank_MLSE_gus9cf.png",                          video:"https://player.vimeo.com/video/1095086532?h=baabcdb92d&autoplay=1" , badge:"COMMERCIAL" },
+    { title:"Bellwoods Brewery - Stay Classy IPA",     year:"2024", role:"Virtual Production Supervisor", tag:"SOCIAL",    img:"https://res.cloudinary.com/dzuuti93k/image/upload/q_auto/f_auto/v1775485962/Bellwoods_Brewery_-_Stay_Classy_IPA_slzbzn.png",       video:"https://player.vimeo.com/video/949924833?autoplay=1" , badge:"COMMERCIAL" },
+    { title:"Mazda - Part of The Family",              year:"2024", role:"Virtual Production Supervisor", tag:"BROADCAST", img:"https://res.cloudinary.com/dzuuti93k/image/upload/q_auto/f_auto/v1775485965/Mazda_-_Part_of_The_Family_einm7l.png",                video:"https://player.vimeo.com/video/912949084?autoplay=1" , badge:"COMMERCIAL" },
+    { title:"RBC",                                     year:"2025", role:"Virtual Production Supervisor", tag:"BROADCAST", img:"https://res.cloudinary.com/dzuuti93k/image/upload/q_auto/f_auto/v1775485966/RBC_vlfcqi.png",                                      video:"https://player.vimeo.com/video/1068276639?h=4aa9f47a30&autoplay=1" , badge:"COMMERCIAL" },
+    { title:"EGALE Canada",                            year:"2024", role:"Virtual Production Supervisor", tag:"BRANDED",   img:"https://res.cloudinary.com/dzuuti93k/image/upload/q_auto/f_auto/v1775485964/Egale_Canada_y8ytka.png",                              video:"https://www.youtube.com/embed/y4S0pnKAPpQ?autoplay=1" , badge:"COMMERCIAL" },
+    { title:"CBC - Make The Season Great",             year:"2024", role:"Virtual Production Supervisor", tag:"BROADCAST", img:"https://res.cloudinary.com/dzuuti93k/image/upload/q_auto/f_auto/v1775583206/CBC_w8sjkr.png",                                      video:"https://www.youtube.com/embed/QSoqiAhzjdE?autoplay=1" , badge:"COMMERCIAL" },
+    { title:"TD Insurance - It\'s All Good",           year:"2024", role:"Virtual Production Supervisor", tag:"BROADCAST", img:"https://res.cloudinary.com/dzuuti93k/image/upload/q_auto/f_auto/v1775485966/TD_Insurance_-_Its_All_good_qjdlgn.png",               video:"https://player.vimeo.com/video/963484596?autoplay=1" , badge:"COMMERCIAL" },
+    { title:"Crazy D\'s Sparkling Prebiotic Soda",    year:"2025", role:"Virtual Production Supervisor", tag:"SOCIAL",    img:"https://res.cloudinary.com/dzuuti93k/image/upload/q_auto/f_auto/v1775485963/Crazy_D_s_Sparkling_Prebiotic_Soda_tpmkab.png",        video:"https://player.vimeo.com/video/1090215866?h=7c189c7d4a&autoplay=1" , badge:"COMMERCIAL" },
+    { title:"Ronin Knights",                           year:"2024", role:"Cinematographer",               tag:"ANIMATION", img:"https://res.cloudinary.com/dzuuti93k/image/upload/q_auto/f_auto/v1775485966/Ronin_Knights_evlwih.png",                            video:"https://www.youtube.com/embed/AXbsd8NsFAI?autoplay=1" , badge:"SHORT" },
+    { title:"Nespresso - What Else?",                  year:"2024", role:"Virtual Production Supervisor", tag:"BROADCAST", img:"https://res.cloudinary.com/dzuuti93k/image/upload/q_auto/f_auto/v1775485966/Nespresso_-_What_Else_ccprno.png",                    video:"https://player.vimeo.com/video/933764083?h=20486f7d2f&autoplay=1" , badge:"COMMERCIAL" },
+    { title:"Nair - Simply Smooth",                    year:"2025", role:"Virtual Production Supervisor", tag:"BROADCAST", img:"https://res.cloudinary.com/dzuuti93k/image/upload/q_auto/f_auto/v1775485965/Nair_-_Simply_Smooth_tnfd96.png",                     video:"https://player.vimeo.com/video/1105153427?h=c8c56a108a&autoplay=1" , badge:"COMMERCIAL" },
+    { title:"Internal",                                year:"2024", role:"Virtual Production Supervisor", tag:"INTERNAL",  img:"https://res.cloudinary.com/dzuuti93k/image/upload/q_auto/f_auto/v1775485965/Internal_cvfbtd.png",                                 video:"https://player.vimeo.com/video/917582172?h=0e6a9ffd2f&autoplay=1" , badge:"COMMERCIAL" },
+    { title:"Government of Canada - Raising Eyebrows", year:"2024", role:"Virtual Production Supervisor", tag:"BROADCAST", img:"https://res.cloudinary.com/dzuuti93k/image/upload/q_auto/f_auto/v1775485964/Government_of_Canada_-_Raising_Eyebrows_wfcy2h.png",   video:"https://www.youtube.com/embed/Q5V0yap77yg?autoplay=1" , badge:"COMMERCIAL" },
+    { title:"Red Bank Whiskey",                        year:"2024", role:"Virtual Production Supervisor", tag:"BRANDED",   img:"https://res.cloudinary.com/dzuuti93k/image/upload/q_auto/f_auto/v1775485966/Redbank_Whiskey_qrinee.png",                          video:"https://player.vimeo.com/video/886241578?h=107e47c8c6&autoplay=1" , badge:"COMMERCIAL" },
+    { title:"Creepy Bits",                             year:"2024", role:"Virtual Production Supervisor", tag:"ANIMATION", img:"https://res.cloudinary.com/dzuuti93k/image/upload/q_auto/f_auto/v1775485963/Creepy_Bits_wxtkev.png",                              video:"https://www.youtube.com/embed/PN-3dvX-3N4?autoplay=1" , badge:"COMMERCIAL" },
+    { title:"Bush's Beans - Bush's Makes It a Meal",   year:"2025", role:"VFX Artist",                    tag:"BROADCAST", img:"https://res.cloudinary.com/dzuuti93k/image/upload/q_auto/f_auto/v1775585028/bushsbeans_y60fo9.png",                                   video:"https://player.vimeo.com/video/1180913137?autoplay=1" , badge:"COMMERCIAL" },
+    { title:"Nestle - Baskin Robbins",                 year:"2026", role:"VFX Artist",                    tag:"BROADCAST", img:fallbackImg, video:"", comingSoon:true , badge:"COMMERCIAL" },
+    { title:"Mandys X Uber Eats",                      year:"2026", role:"VFX Artist",                    tag:"DIGITAL",   img:fallbackImg, video:"", comingSoon:true , badge:"COMMERCIAL" },
+    { title:"Relationship Goals",                      year:"2025", role:"Virtual Production Supervisor", tag:"BROADCAST", img:fallbackImg, video:"", comingSoon:true , badge:"FEATURE" },
+    { title:"Can I Come In",                           year:"2026", role:"VFX Artist",                    tag:"BROADCAST", img:fallbackImg, video:"", comingSoon:true , badge:"FEATURE" }
 ];
 
 // ═══════════════════════════════════════════
@@ -615,6 +769,14 @@ data.forEach((itemData, index) => {
         cardWrapper.appendChild(embossed);
     } else {
         cardWrapper.appendChild(img);
+    }
+
+    // Badge
+    if (itemData.badge) {
+        const badge = document.createElement('div');
+        badge.className = 'card-tag-badge';
+        badge.textContent = itemData.badge;
+        cardWrapper.appendChild(badge);
     }
 
     cardWrapper.addEventListener('click', () => {
@@ -670,11 +832,13 @@ window.addEventListener('mousemove', (e) => {
 // DIAL STATE
 // ═══════════════════════════════════════════
 const SELECTOR_ANGLE = 20;
-let currentRot = 0, targetRot = 0;
+const _startIdx = Math.floor(Math.random() * data.length);
+const _startRot = SELECTOR_ANGLE - (_startIdx * (360 / data.length));
+let currentRot = _startRot, targetRot = _startRot;
 let isDragging = false, isScrolling = false, scrollTimeout = null;
 let startX = 0, lastDragX = 0, dragVelocity = 0;
 let lastActiveIdx = -1;
-let dialLocked = false; // locked during boot / konami
+let dialLocked = false;
 const scene = document.getElementById('scene');
 
 scene.addEventListener('mousedown', (e) => {
@@ -699,18 +863,59 @@ scene.addEventListener('wheel', (e) => {
     scrollTimeout = setTimeout(() => { isScrolling = false; }, 125);
 }, { passive: true });
 
-let touchStartX = 0, lastTouchX = 0, touchVelocity = 0;
+// ── TOUCH / SWIPE ────────────────────────
+// Tracks a rolling velocity history for smooth momentum on release
+let touchStartX   = 0;
+let lastTouchX    = 0;
+let lastTouchTime = 0;
+let touchVelHistory = []; // rolling window of recent velocities
+const VEL_HISTORY_MS = 80; // only average velocity over last 80ms
+
 scene.addEventListener('touchstart', (e) => {
-    touchStartX = e.touches[0].clientX; lastTouchX = touchStartX; touchVelocity = 0;
-}, { passive:true });
+    if (e.touches.length > 1) return; // ignore multi-touch
+    touchStartX     = e.touches[0].clientX;
+    lastTouchX      = touchStartX;
+    lastTouchTime   = Date.now();
+    touchVelHistory = [];
+    isScrolling     = false;
+}, { passive: true });
+
 scene.addEventListener('touchmove', (e) => {
-    if (dialLocked) return;
-    touchVelocity = e.touches[0].clientX - lastTouchX;
-    lastTouchX = e.touches[0].clientX;
-    targetRot += (e.touches[0].clientX - touchStartX) * 0.4;
-    touchStartX = e.touches[0].clientX;
-}, { passive:true });
-scene.addEventListener('touchend', () => { targetRot += touchVelocity * 6; }, { passive:true });
+    if (dialLocked || e.touches.length > 1) return;
+    const x    = e.touches[0].clientX;
+    const now  = Date.now();
+    const dt   = Math.max(now - lastTouchTime, 1);
+    const dx   = x - lastTouchX;
+
+    // Record velocity sample with timestamp
+    touchVelHistory.push({ v: dx / dt, t: now });
+    // Trim old samples outside the window
+    const cutoff = now - VEL_HISTORY_MS;
+    touchVelHistory = touchVelHistory.filter(s => s.t > cutoff);
+
+    targetRot += dx * 0.4;
+    lastTouchX    = x;
+    lastTouchTime = now;
+}, { passive: true });
+
+scene.addEventListener('touchend', (e) => {
+    if (touchVelHistory.length === 0) return;
+
+    // Weighted average of recent velocity samples (newer = heavier)
+    let totalWeight = 0, weightedVel = 0;
+    touchVelHistory.forEach((s, i) => {
+        const w = i + 1;
+        weightedVel  += s.v * w;
+        totalWeight  += w;
+    });
+    const avgVel = weightedVel / totalWeight;
+
+    // Scale momentum — feels like iOS: fast flick = big coast, gentle swipe = small nudge
+    const momentum = avgVel * 18;
+    const MAX_MOMENTUM = 120;
+    targetRot += Math.max(-MAX_MOMENTUM, Math.min(MAX_MOMENTUM, momentum));
+    touchVelHistory = [];
+}, { passive: true });
 
 // ═══════════════════════════════════════════
 // KEYBOARD — shared handler
@@ -718,13 +923,14 @@ scene.addEventListener('touchend', () => { targetRot += touchVelocity * 6; }, { 
 document.addEventListener('keydown', (e) => {
     // konami takes priority
     if (konamiActive) { dismissKonami(); return; }
-    // boot skip
-    if (bootRunning) { skipBoot(); return; }
     // search open
     if (e.key === '/' && !searchOpen) { e.preventDefault(); openSearch(); return; }
     if (searchOpen) { if (e.key === 'Escape') closeSearch(); return; }
+    // contact
+    if (e.key === '?' && !contactOpen) { openContact(); return; }
+    if (contactOpen) { if (e.key === 'Escape') closeContact(); return; }
     // modal close
-    if (e.key === 'Escape') { closeModal(); closeComingSoon(); return; }
+    if (e.key === 'Escape') { closeModal(); closeComingSoon(); closeContact(); return; }
     // konami buffer
     handleKonamiKey(e.key);
     // dial navigation
@@ -758,14 +964,14 @@ function closeComingSoon() {
 function handleItemClick(index) {
     if (items[index].classList.contains('active')) {
         const p = data[index];
-        if (p.video) openModal(p.video, p.title);
+        if (p.video) openModal(p.video, p.title, p);
     } else {
         const step = 360 / itemCount;
         targetRot = SELECTOR_ANGLE - (index * step);
     }
 }
 
-function openModal(videoUrl, title) {
+function openModal(videoUrl, title, project) {
     // letterbox first
     document.getElementById('letterbox-top').classList.add('open');
     document.getElementById('letterbox-bottom').classList.add('open');
@@ -777,6 +983,8 @@ function openModal(videoUrl, title) {
         modal.style.display = 'flex';
         requestAnimationFrame(() => requestAnimationFrame(() => modal.classList.add('visible')));
         document.body.style.cursor = 'auto';
+        // Show dossier with project info
+        if (project) openDossier(project);
     }, 380);
 }
 
@@ -790,12 +998,73 @@ function closeModal() {
         modal.style.display = 'none';
         document.getElementById('video-frame').src = "";
     }, 400);
+    closeDossier();
     document.body.style.cursor = 'none';
 }
 
 // ═══════════════════════════════════════════
-// SEARCH
+// DRAGGABLE DOSSIER
 // ═══════════════════════════════════════════
+const dossier = document.getElementById('dossier');
+const dossierTitlebar = document.getElementById('dossier-titlebar');
+let dossierDragging = false, dossierOX = 0, dossierOY = 0;
+
+function openDossier(project) {
+    document.getElementById('dossier-filename').textContent =
+        project.title.replace(/[^a-zA-Z0-9]/g,'_').toUpperCase().slice(0,22) + '.TXT';
+    document.getElementById('dossier-title').textContent = project.title;
+    document.getElementById('dossier-badge').textContent = project.badge || '—';
+    document.getElementById('dossier-year').textContent  = project.year  || '—';
+    document.getElementById('dossier-role').textContent  = project.role  || '—';
+
+    // Position: top-left corner of screen with small offset
+    dossier.style.left = '40px';
+    dossier.style.top  = '80px';
+    dossier.style.display = 'flex';
+    requestAnimationFrame(() => requestAnimationFrame(() => dossier.classList.add('visible')));
+}
+
+function closeDossier() {
+    dossier.classList.remove('visible');
+    setTimeout(() => { dossier.style.display = 'none'; }, 300);
+}
+
+// Drag behaviour
+dossierTitlebar.addEventListener('mousedown', (e) => {
+    dossierDragging = true;
+    dossierOX = e.clientX - dossier.offsetLeft;
+    dossierOY = e.clientY - dossier.offsetTop;
+    dossier.style.transition = 'none';
+    e.preventDefault();
+});
+window.addEventListener('mousemove', (e) => {
+    if (!dossierDragging) return;
+    let x = e.clientX - dossierOX;
+    let y = e.clientY - dossierOY;
+    // Keep within viewport
+    x = Math.max(0, Math.min(window.innerWidth  - dossier.offsetWidth,  x));
+    y = Math.max(0, Math.min(window.innerHeight - dossier.offsetHeight, y));
+    dossier.style.left = x + 'px';
+    dossier.style.top  = y + 'px';
+});
+window.addEventListener('mouseup', () => { dossierDragging = false; });
+
+// Touch drag
+dossierTitlebar.addEventListener('touchstart', (e) => {
+    dossierDragging = true;
+    dossierOX = e.touches[0].clientX - dossier.offsetLeft;
+    dossierOY = e.touches[0].clientY - dossier.offsetTop;
+}, { passive: true });
+window.addEventListener('touchmove', (e) => {
+    if (!dossierDragging) return;
+    let x = e.touches[0].clientX - dossierOX;
+    let y = e.touches[0].clientY - dossierOY;
+    x = Math.max(0, Math.min(window.innerWidth  - dossier.offsetWidth,  x));
+    y = Math.max(0, Math.min(window.innerHeight - dossier.offsetHeight, y));
+    dossier.style.left = x + 'px';
+    dossier.style.top  = y + 'px';
+}, { passive: true });
+window.addEventListener('touchend', () => { dossierDragging = false; });
 let searchOpen = false;
 const searchOverlay = document.getElementById('search-overlay');
 const searchInput   = document.getElementById('search-input');
@@ -829,7 +1098,8 @@ function renderSearchResults(query) {
         row.className = 'search-result-item';
         row.innerHTML = `
             <span class="sr-idx">${String(i+1).padStart(2,'0')}</span>
-            <span class="sr-title">${d.title}</span>`;
+            <span class="sr-title">${d.title}</span>
+            <span class="sr-tag">${d.badge || ''}</span>`;
         row.addEventListener('click', () => {
             closeSearch();
             const step = 360 / itemCount;
@@ -1065,7 +1335,7 @@ function startContraAnimation() {
 
         // Auto-shoot
         shootTimer++;
-        if (shootTimer >= 15) {
+        if (shootTimer >= 35) {
             bullets.push({ x: px + 8*S, y: BULLET_Y });
             shootTimer = 0;
             playBlip(700 + Math.random()*200, 0.03);
@@ -1134,101 +1404,22 @@ function startContraAnimation() {
 }
 
 // ═══════════════════════════════════════════
-// BOOT SEQUENCE
-// ═══════════════════════════════════════════
-let bootRunning = true;
-const BOOT_KEY = 'cmcneilly_booted';
-const bootLines = [
-    { text: "MCNEILLY VFX SYSTEMS v2.4.1", cls: "" },
-    { text: "Copyright (C) Conor McNeilly. All rights reserved.", cls: "dim" },
-    { text: "——————————————————————————————————", cls: "dim" },
-    { text: "Initializing display driver............. OK", cls: "" },
-    { text: "Loading asset registry.................. OK", cls: "" },
-    { text: "Calibrating radial index system......... OK", cls: "" },
-    { text: "Checking frame buffers (34 entries)..... OK", cls: "" },
-    { text: "Mounting VFX archive.................... OK", cls: "" },
-    { text: "Audio subsystem......................... READY", cls: "" },
-    { text: "——————————————————————————————————", cls: "dim" },
-    { text: "WARNING: Unauthorized access prohibited.", cls: "red" },
-    { text: "——————————————————————————————————", cls: "dim" },
-    { text: "SYSTEM READY. LOADING PORTFOLIO...", cls: "red" },
-];
-
-function runBoot() {
-    const bootScreen = document.getElementById('boot-screen');
-    const linesEl    = document.getElementById('boot-lines');
-    dialLocked = true;
-    let i = 0;
-
-    function addLine() {
-        if (i >= bootLines.length) {
-            setTimeout(finishBoot, 600);
-            return;
-        }
-        const span = document.createElement('span');
-        span.className = 'line ' + bootLines[i].cls;
-        span.textContent = '> ' + bootLines[i].text;
-        // append cursor to last line
-        if (i === bootLines.length - 1) {
-            const cur = document.createElement('span');
-            cur.id = 'boot-cursor'; span.appendChild(cur);
-        }
-        linesEl.appendChild(span);
-        requestAnimationFrame(() => span.classList.add('show'));
-        playBlip(300 + Math.random()*200, 0.03);
-        i++;
-        setTimeout(addLine, 80 + Math.random() * 80);
-    }
-    addLine();
-}
-
-function finishBoot() {
-    bootRunning = false;
-    dialLocked = false;
-    const bootScreen = document.getElementById('boot-screen');
-    bootScreen.classList.add('fade-out');
-    setTimeout(() => { bootScreen.style.display = 'none'; }, 700);
-    try { localStorage.setItem(BOOT_KEY, '1'); } catch(e){}
-}
-
-function skipBoot() {
-    bootRunning = false;
-    dialLocked = false;
-    const bootScreen = document.getElementById('boot-screen');
-    bootScreen.classList.add('fade-out');
-    setTimeout(() => { bootScreen.style.display = 'none'; }, 300);
-    try { localStorage.setItem(BOOT_KEY, '1'); } catch(e){}
-}
-
-// Only show boot on first-ever visit
-try {
-    if (localStorage.getItem(BOOT_KEY)) {
-        // already booted before — skip instantly
-        document.getElementById('boot-screen').style.display = 'none';
-        bootRunning = false;
-        dialLocked = false;
-    } else {
-        runBoot();
-    }
-} catch(e) {
-    // localStorage blocked — show boot anyway
-    runBoot();
-}
-
-// ═══════════════════════════════════════════
 // MAIN ANIMATION LOOP
 // ═══════════════════════════════════════════
 function animate() {
     const step = 360 / itemCount;
 
     if (!isDragging && !isScrolling) {
+        // Idle drift — slow auto-rotate after 1 minute of inactivity
+        if (isDrifting) targetRot -= 0.12;
+
         let offset = (targetRot - SELECTOR_ANGLE) % step;
         if (offset >  step/2) offset -= step;
         if (offset < -step/2) offset += step;
         targetRot -= offset * 0.2;
     }
 
-    currentRot += (targetRot - currentRot) * 0.16;
+    currentRot += (targetRot - currentRot) * 0.18;
     dial.style.transform = `rotateZ(${currentRot}deg)`;
 
     let exactIndex  = (SELECTOR_ANGLE - currentRot) / step;
@@ -1240,6 +1431,9 @@ function animate() {
         lastActiveIdx = activeIndex;
         document.getElementById('meta-idx').innerText = String(activeIndex+1).padStart(2,'0');
     }
+
+    // Ring updates every frame — driven by live rotation
+    updateRing(activeIndex);
 
     items.forEach((item, i) => {
         const wasActive = item.classList.contains('active');
@@ -1257,6 +1451,101 @@ function animate() {
 
     requestAnimationFrame(animate);
 }
+// ═══════════════════════════════════════════
+// IDLE DRIFT
+// ═══════════════════════════════════════════
+const IDLE_DELAY = 60000; // 1 minute
+let idleTimer = null;
+let isDrifting = false;
+
+function resetIdleTimer() {
+    clearTimeout(idleTimer);
+    if (isDrifting) { isDrifting = false; }
+    idleTimer = setTimeout(() => { isDrifting = true; }, IDLE_DELAY);
+}
+
+['mousemove','mousedown','wheel','touchstart','keydown'].forEach(ev =>
+    window.addEventListener(ev, resetIdleTimer, { passive: true })
+);
+resetIdleTimer();
+
+// ═══════════════════════════════════════════
+// COUNTER RING
+// ═══════════════════════════════════════════
+const ringFill  = document.getElementById('ring-fill');
+const ringLabel = document.getElementById('ring-label');
+const RING_R    = 24;
+const CIRCUMFERENCE = 2 * Math.PI * RING_R;
+ringFill.style.strokeDasharray  = CIRCUMFERENCE;
+ringFill.style.strokeDashoffset = CIRCUMFERENCE;
+ringFill.style.transition = 'none';
+
+function updateRing(activeIndex) {
+    // Drive ring directly from dial rotation — mirrors scroll direction
+    const totalDeg = 360; // one full loop
+    // currentRot increases going left, decreases going right
+    // Map into 0–360 range within current loop
+    const posInLoop = ((currentRot % totalDeg) + totalDeg) % totalDeg;
+    const pct = posInLoop / totalDeg;
+    ringFill.style.strokeDashoffset = CIRCUMFERENCE * (1 - pct);
+    // Label shows current project position
+    const pos = activeIndex + 1;
+    ringLabel.textContent = pos;
+}
+
+// ═══════════════════════════════════════════
+// CONTACT OVERLAY
+// ═══════════════════════════════════════════
+let contactOpen = false;
+const contactOverlay = document.getElementById('contact-overlay');
+
+function openContact() {
+    contactOpen = true;
+    contactOverlay.style.display = 'flex';
+    requestAnimationFrame(() => requestAnimationFrame(() => contactOverlay.classList.add('visible')));
+    document.body.style.cursor = 'auto';
+    playBlip(600, 0.06);
+}
+function closeContact() {
+    contactOpen = false;
+    contactOverlay.classList.remove('visible');
+    setTimeout(() => { contactOverlay.style.display = 'none'; }, 250);
+    document.body.style.cursor = 'none';
+}
+contactOverlay.addEventListener('click', (e) => {
+    if (e.target === contactOverlay) closeContact();
+});
+
+// ── AUDIO UNLOCK ─────────────────────────
+// Browsers require a user gesture before AudioContext can run.
+// Pre-warm it on the very first interaction so tick sounds work immediately.
+function unlockAudio() {
+    const ctx = getAudioCtx();
+    if (ctx.state === 'suspended') ctx.resume();
+    // Play a silent buffer to fully unlock on iOS/Safari
+    const buf = ctx.createBuffer(1, 1, 22050);
+    const src = ctx.createBufferSource();
+    src.buffer = buf;
+    src.connect(ctx.destination);
+    src.start(0);
+    document.removeEventListener('click', unlockAudio);
+    document.removeEventListener('keydown', unlockAudio);
+    document.removeEventListener('touchstart', unlockAudio);
+}
+document.addEventListener('click', unlockAudio);
+document.addEventListener('keydown', unlockAudio);
+document.addEventListener('touchstart', unlockAudio);
+
+// Wire email link via JS so Cloudflare can't detect it
+document.addEventListener('DOMContentLoaded', () => {
+    const el = document.getElementById('contact-email');
+    if (el) {
+        const e = ['conormcneilly7','gmail.com'].join('@');
+        el.href = 'mailto:' + e;
+        el.textContent = e;
+    }
+});
+
 animate();
 </script>
 </body>
