@@ -16,6 +16,169 @@
             --card-height: 180px;
         }
 
+        body.night-mode {
+            --bg-color: #1c1a17;
+            --text-color: #a09a90;
+            --text-muted: #5a5550;
+            --line-color: #3a3530;
+            --active-color: #c0392b;
+        }
+        body.night-mode { background-color: var(--bg-color); }
+        body.night-mode .line { background-color: #3a3530; }
+        body.night-mode .title { color: #8a8278; }
+        body.night-mode .item.active .title { color: #c0392b; }
+        body.night-mode .stats { color: #5a5550; }
+        body.night-mode .item.active .stats { color: #8a8278; }
+        body.night-mode #selector-line { background-color: #c0392b; }
+        body.night-mode .item.active .card-wrapper img {
+            animation: pulse-border 2s ease-in-out infinite;
+            outline: 2px solid #c0392b; outline-offset: -2px;
+        }
+        body.night-mode .card-wrapper { background: #141210; border-color: #3a3530; }
+        body.night-mode .card-wrapper img { border-color: #2a2520; filter: grayscale(0.3) contrast(0.9) opacity(0.85); }
+        body.night-mode .item.active .card-wrapper img { filter: grayscale(0) contrast(1.05) brightness(0.9) opacity(1); }
+        body.night-mode #dossier { background: #1c1a17; border-color: #3a3530; box-shadow: 4px 4px 0 #0a0906; }
+        body.night-mode #dossier-titlebar { background: #2a2520; }
+        body.night-mode .dossier-divider { background: #3a3530; }
+        body.night-mode .dossier-label { color: #5a5550; }
+        body.night-mode .dossier-value { color: #a09a90; }
+        body.night-mode #search-overlay { background: rgba(28,26,23,0.98); }
+        body.night-mode #search-input { color: #a09a90; }
+        body.night-mode #search-wrap { border-color: #5a5550; }
+        body.night-mode .search-result-item { border-color: #3a3530; }
+        body.night-mode .sr-title { color: #a09a90; }
+        body.night-mode #video-modal { background: rgba(20,18,16,0.98); }
+        body.night-mode .modal-container { border-color: #3a3530; box-shadow: 15px 15px 0 #0a0906; }
+        body.night-mode .project-label { color: #8a8278; }
+        body.night-mode #coming-soon-modal { background: rgba(20,18,16,0.98); }
+        body.night-mode .cs-modal-inner { background: #2a2520; border-color: #3a3530; box-shadow: 15px 15px 0 #0a0906; }
+        body.night-mode #contact-overlay { background: rgba(28,26,23,0.98); }
+        body.night-mode .contact-label { color: #5a5550; }
+        body.night-mode .contact-name { color: #3a3530; }
+        body.night-mode .contact-value { color: #a09a90; }
+        body.night-mode .meta-label { color: #8a8278; }
+        body.night-mode .meta-value { color: #c0392b; }
+        body.night-mode #degree-indicator { color: #c0392b; }
+        body.night-mode #hint { color: #4a4540; }
+        body.night-mode #counter-ring #ring-track { stroke: #3a3530; }
+        body.night-mode #counter-ring #ring-fill { stroke: #c0392b; }
+        body.night-mode #counter-ring #ring-label { color: #5a5550; }
+        body.night-mode .embossed-card { background: #2a2520; }
+        body.night-mode .embossed-card span { text-shadow: 1px 1px 0 rgba(60,50,40,0.6), -1px -1px 0 rgba(0,0,0,0.4); }
+        body, body.night-mode { transition: background-color 0.5s ease; }
+
+        /* Night mode toggle */
+        #night-toggle {
+            margin-top: 10px;
+            display: flex; align-items: center; gap: 8px;
+            pointer-events: auto; cursor: pointer;
+        }
+        #night-toggle-label {
+            font-family: "Courier New", Courier, monospace;
+            font-size: 9px; color: var(--text-muted);
+            text-transform: uppercase; letter-spacing: 1.5px;
+            user-select: none;
+        }
+        #night-toggle-switch {
+            width: 28px; height: 14px;
+            border: 1px solid var(--text-muted);
+            position: relative; flex-shrink: 0;
+            transition: border-color 0.3s;
+        }
+        #night-toggle-switch::after {
+            content: '';
+            position: absolute;
+            top: 2px; left: 2px;
+            width: 8px; height: 8px;
+            background: var(--text-muted);
+            transition: transform 0.25s ease, background 0.3s;
+        }
+        body.night-mode #night-toggle-switch { border-color: #8b5cf6; }
+        body.night-mode #night-toggle-switch::after {
+            transform: translateX(14px);
+            background: #8b5cf6;
+        }
+
+
+        /* Record mode indicator */
+        #record-indicator {
+            position: fixed; bottom: 100px; left: 40px;
+            z-index: 200; pointer-events: none;
+            opacity: 0; transition: opacity 0.4s ease;
+            display: flex; align-items: center; gap: 10px;
+        }
+        #record-indicator.visible { opacity: 1; }
+        #record-disc {
+            width: 22px; height: 22px; border-radius: 50%;
+            border: 2px solid var(--active-color);
+            position: relative; flex-shrink: 0;
+            animation: none;
+        }
+        #record-disc::before {
+            content: '';
+            position: absolute; inset: 4px;
+            border-radius: 50%;
+            border: 1px solid var(--active-color);
+            opacity: 0.4;
+        }
+        #record-disc::after {
+            content: '';
+            position: absolute; top: 50%; left: 50%;
+            width: 4px; height: 4px; border-radius: 50%;
+            background: var(--active-color);
+            transform: translate(-50%, -50%);
+        }
+        @keyframes spin-disc {
+            from { transform: rotate(0deg); }
+            to   { transform: rotate(360deg); }
+        }
+        #record-indicator.visible #record-disc {
+            animation: spin-disc 2s linear infinite;
+        }
+        #record-label {
+            font-family: "Courier New", Courier, monospace;
+            font-size: 8px; color: var(--active-color);
+            text-transform: uppercase; letter-spacing: 2px;
+        }
+
+        /* Record mode — all cards flattened */
+        body.record-mode .item.active .card-wrapper {
+            transform: translateZ(160px) rotateX(90deg) rotateY(-65deg) !important;
+            box-shadow: none !important;
+        }
+        body.record-mode .item.active .card-wrapper img {
+            filter: grayscale(1) contrast(0.9) opacity(0.8) !important;
+            outline: none !important;
+            animation: none !important;
+        }
+        body.record-mode .item.active .info {
+            transform: rotate(-90deg) translateX(-100%) translateY(calc(-100% - 10px)) !important;
+        }
+        body.record-mode .item.active .title {
+            color: var(--text-color) !important;
+            font-size: 11px !important;
+        }
+        body.record-mode .item.active .stats {
+            color: var(--text-muted) !important;
+            font-size: 9px !important;
+        }
+
+        /* Click ripple */
+        .click-ripple {
+            position: fixed;
+            width: 8px; height: 8px;
+            border-radius: 50%;
+            border: 1px solid var(--active-color);
+            pointer-events: none;
+            z-index: 8999;
+            transform: translate(-50%, -50%) scale(1);
+            opacity: 0.8;
+            animation: ripple-out 0.5s ease-out forwards;
+        }
+        @keyframes ripple-out {
+            to { transform: translate(-50%, -50%) scale(6); opacity: 0; }
+        }
+
         body {
             margin: 0; padding: 0;
             overflow: hidden;
@@ -50,20 +213,69 @@
         .meta-label { color: var(--text-color); font-weight: bold; }
         .meta-value  { color: var(--active-color); }
 
-        .header-block {
-            position: fixed; top: 40px; right: 40px;
-            text-align: right; z-index: 100; pointer-events: none;
+        /* ── EMBOSS NAME ── */
+        #emboss-name {
+            position: fixed; top: 36px; right: 40px;
+            z-index: 100; pointer-events: none;
+            text-align: right;
         }
-        .title-pixel {
-            font-family: 'Press Start 2P', monospace; font-size: 14px;
-            text-transform: lowercase; color: #dcd8d1;
-            text-shadow: -1px -1px 0 rgba(17,17,17,0.2), 1px 1px 0 rgba(255,255,255,0.8);
-            margin-bottom: 8px;
+        #emboss-title {
+            font-family: 'Press Start 2P', monospace;
+            font-size: 13px; text-transform: lowercase;
+            letter-spacing: 1px;
+            display: block; margin-bottom: 7px;
+            /* Start: invisible, no depth */
+            color: transparent;
+            text-shadow: none;
+            transform: translateZ(0px) scale(0.94);
+            filter: blur(3px);
+            transition:
+                color 4.5s ease,
+                text-shadow 4.5s ease,
+                transform 4.5s cubic-bezier(0.2, 0, 0.1, 1),
+                filter 4.5s ease;
         }
-        .subtitle-pixel {
-            font-family: 'Press Start 2P', monospace; font-size: 9px;
-            text-transform: uppercase; color: #dcd8d1;
-            text-shadow: -1px -1px 0 rgba(17,17,17,0.2), 1px 1px 0 rgba(255,255,255,0.8);
+        #emboss-title.pressed {
+            color: #dcd8d1;
+            text-shadow:
+                -1px -1px 0 rgba(17,17,17,0.25),
+                 1px  1px 0 rgba(255,255,255,0.9),
+                -2px -2px 0 rgba(17,17,17,0.08),
+                 2px  2px 0 rgba(255,255,255,0.5);
+            transform: translateZ(0px) scale(1);
+            filter: blur(0px);
+        }
+        #emboss-sub {
+            font-family: 'Press Start 2P', monospace;
+            font-size: 10px; text-transform: uppercase;
+            letter-spacing: 1px;
+            display: block;
+            color: transparent;
+            text-shadow: none;
+            filter: blur(2px);
+            transition:
+                color 4.5s ease 0.4s,
+                text-shadow 4.5s ease 0.4s,
+                filter 4.5s ease 0.4s;
+        }
+        #emboss-sub.pressed {
+            color: #dcd8d1;
+            text-shadow:
+                -1px -1px 0 rgba(17,17,17,0.2),
+                 1px  1px 0 rgba(255,255,255,0.7);
+            filter: blur(0px);
+        }
+        body.night-mode #emboss-title.pressed {
+            color: #3a3530;
+            text-shadow:
+                -1px -1px 0 rgba(0,0,0,0.5),
+                 1px  1px 0 rgba(80,70,60,0.3);
+        }
+        body.night-mode #emboss-sub.pressed {
+            color: #3a3530;
+            text-shadow:
+                -1px -1px 0 rgba(0,0,0,0.4),
+                 1px  1px 0 rgba(80,70,60,0.25);
         }
 
         #degree-indicator {
@@ -73,7 +285,6 @@
             color: var(--active-color); z-index: 100;
             pointer-events: none; letter-spacing: 1px;
         }
-
         /* ── COUNTER RING ── */
         #counter-ring {
             position: fixed; bottom: 80px; right: 28px;
@@ -226,6 +437,7 @@
             position: relative; transform-style: preserve-3d;
             transform: scale(0.8) rotateX(68deg);
             transition: transform 0.3s ease;
+            will-change: transform;
         }
         #dial {
             position: relative; transform-style: preserve-3d;
@@ -531,6 +743,12 @@
 
 <div id="cursor-crosshair"></div>
 
+<div id="record-indicator">
+    <div id="record-disc"></div>
+    <span id="record-label">RECORD MODE</span>
+</div>
+
+
 <!-- LETTERBOX BARS -->
 <div id="letterbox-top"></div>
 <div id="letterbox-bottom"></div>
@@ -540,11 +758,17 @@
     <div class="metadata-block">
         <div><span class="meta-label">FRAME_INDEX:</span> <span id="meta-idx" class="meta-value">01</span> / 37</div>
     </div>
+    <div id="night-toggle" onclick="toggleNightMode()">
+        <div id="night-toggle-switch"></div>
+        <span id="night-toggle-label">NIGHT MODE</span>
+    </div>
 </div>
-<div class="header-block">
-    <div class="title-pixel">conor mcneilly</div>
-    <div class="subtitle-pixel">VFX Portfolio</div>
+<!-- EMBOSS NAME -->
+<div id="emboss-name">
+    <span id="emboss-title">conor mcneilly</span>
+    <span id="emboss-sub">VFX Work</span>
 </div>
+
 <div id="degree-indicator">0°</div>
 
 <!-- COUNTER RING -->
@@ -700,43 +924,43 @@ const placeholderVideo = "";
 const fallbackImg = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='320' height='180'%3E%3Crect width='320' height='180' fill='%23ccc'/%3E%3Ctext x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle' font-family='Courier New' font-size='11' fill='%23999'%3EIMAGE NOT FOUND%3C/text%3E%3C/svg%3E";
 
 const data = [
-    { title:"American Express - Business Platinum",   year:"2024", role:"Virtual Production Supervisor", tag:"BROADCAST", img:"https://res.cloudinary.com/dzuuti93k/image/upload/q_auto/f_auto/v1775485963/American_Express_-_Buisness_Platinum_rq6zhl.png",       video:"https://player.vimeo.com/video/1000785962?autoplay=1" , badge:"COMMERCIAL" },
-    { title:"Secret - Stay Fresher Under Pressure",   year:"2025", role:"Virtual Production Supervisor", tag:"BROADCAST", img:"https://res.cloudinary.com/dzuuti93k/image/upload/v1775485967/Secret_-_Stay_Fresher_Under_Pressure_v6lnbv.png",                   video:"https://player.vimeo.com/video/1101277844?h=5e91c35cdb&autoplay=1" , badge:"COMMERCIAL" },
-    { title:"TD Canada - TD Playoff Advisor",          year:"2025", role:"Virtual Production Supervisor", tag:"DIGITAL",   img:"https://res.cloudinary.com/dzuuti93k/image/upload/q_auto/f_auto/v1775485966/TD_Canada_-_TD_Playoff_Advisor_hqbeou.png",            video:"https://player.vimeo.com/video/1125938314?h=9e23a42790&autoplay=1" , badge:"COMMERCIAL" },
-    { title:"M&Ms - Roadtrip",                         year:"2025", role:"Virtual Production Supervisor", tag:"BROADCAST", img:"https://res.cloudinary.com/dzuuti93k/image/upload/q_auto/f_auto/v1775485965/M_M_s_-_Road_Trip_fhvcgi.png",                        video:"https://player.vimeo.com/video/1153031523?h=3aa93e5b43&autoplay=1" , badge:"COMMERCIAL" },
-    { title:"Audible Espanol",                         year:"2025", role:"Virtual Production Supervisor", tag:"DIGITAL",   img:"https://res.cloudinary.com/dzuuti93k/image/upload/q_auto/f_auto/v1775485963/Audible_Espanol_sxb8s2.png",                          video:"https://player.vimeo.com/video/1153031623?h=ffd807b05e&autoplay=1" , badge:"COMMERCIAL" },
-    { title:"Doordash",                                year:"2025", role:"Virtual Production Supervisor", tag:"SOCIAL",    img:"https://res.cloudinary.com/dzuuti93k/image/upload/q_auto/f_auto/v1775485964/DoorDash_-_Must_Ice_Cream_wf17j3.png",                 video:"https://player.vimeo.com/video/1128234649?autoplay=1" , badge:"COMMERCIAL" },
-    { title:"Pizza Hut",                               year:"2025", role:"Virtual Production Supervisor", tag:"BROADCAST", img:"https://res.cloudinary.com/dzuuti93k/image/upload/q_auto/f_auto/v1775485965/Pizza_Hut_qvs77i.png",                                video:"https://player.vimeo.com/video/1100398172?h=5c47516975&autoplay=1" , badge:"COMMERCIAL" },
-    { title:"Tim Hortons - $1 Classic Donut",          year:"2024", role:"Virtual Production Supervisor", tag:"BROADCAST", img:"https://res.cloudinary.com/dzuuti93k/image/upload/q_auto/f_auto/v1775485967/Tim_Hortons_-_1_Classic_Donut_nvolsy.png",             video:"https://player.vimeo.com/video/1077259590?h=b1bf081af7&autoplay=1" , badge:"COMMERCIAL" },
-    { title:"HALLS - Just Breathe Through It",         year:"2024", role:"Virtual Production Supervisor", tag:"BROADCAST", img:"https://res.cloudinary.com/dzuuti93k/image/upload/q_auto/f_auto/v1775485964/HALLS_-_Just_Breathe_Through_It_twkozd.png",           video:"https://player.vimeo.com/video/1036426764?h=5706bf4155&autoplay=1" , badge:"COMMERCIAL" },
-    { title:"Hyundai",                                 year:"2024", role:"Virtual Production Supervisor", tag:"BROADCAST", img:"https://res.cloudinary.com/dzuuti93k/image/upload/q_auto/f_auto/v1775485965/Hyundai_xisgp8.png",                                  video:"https://www.youtube.com/embed/Uq9LR5F2HNs?autoplay=1" , badge:"COMMERCIAL" },
-    { title:"Coast Capital",                           year:"2025", role:"Virtual Production Supervisor", tag:"BRANDED",   img:"https://res.cloudinary.com/dzuuti93k/image/upload/q_auto/f_auto/v1775485963/Coast_Capital_-_Get_Unstuck_imrcla.png",               video:"https://player.vimeo.com/video/1080539582?h=1a18af1670&autoplay=1" , badge:"COMMERCIAL" },
-    { title:"Lotto Max - Dream To The Max",            year:"2024", role:"Virtual Production Supervisor", tag:"BROADCAST", img:"https://res.cloudinary.com/dzuuti93k/image/upload/q_auto/f_auto/v1775485965/Lotto_Max_-_Dream_To_The_Max_a1hd3t.png",              video:"https://player.vimeo.com/video/1007677871?autoplay=1" , badge:"COMMERCIAL" },
-    { title:"U.S Bank - The Power of Us",              year:"2025", role:"Virtual Production Supervisor", tag:"BROADCAST", img:"https://res.cloudinary.com/dzuuti93k/image/upload/q_auto/f_auto/v1775583206/USBank_tspksp.png",                                   video:"https://player.vimeo.com/video/1090962650?h=f7fcbfb447&autoplay=1" , badge:"COMMERCIAL" },
-    { title:"Greatest Journey",                        year:"2024", role:"Virtual Production Supervisor", tag:"ANIMATION", img:"https://res.cloudinary.com/dzuuti93k/image/upload/q_auto/f_auto/v1775485964/Greatest_Journey_xovbm0.png",                          video:"https://player.vimeo.com/video/1016237753?h=81a30a9833&autoplay=1" , badge:"COMMERCIAL" },
-    { title:"Delta Casino - Casino Wherever You Go",   year:"2025", role:"Virtual Production Supervisor", tag:"DIGITAL",   img:"https://res.cloudinary.com/dzuuti93k/image/upload/q_auto/f_auto/v1775485963/Delta_Casino_-_Casino_Whereever_You_Go_skyunx.png",    video:"https://player.vimeo.com/video/1153031849?autoplay=1" , badge:"COMMERCIAL" },
-    { title:"Apple - Vroom",                           year:"2024", role:"Virtual Production Supervisor", tag:"BRANDED",   img:"https://res.cloudinary.com/dzuuti93k/image/upload/q_auto/f_auto/v1775485962/Apple_-_VROOM_mezkwj.png",                            video:"https://www.youtube.com/embed/Du1wD-vZ0RQ?autoplay=1" , badge:"COMMERCIAL" },
-    { title:"Seneca Polytechnic",                      year:"2025", role:"Virtual Production Supervisor", tag:"BRANDED",   img:"https://res.cloudinary.com/dzuuti93k/image/upload/q_auto/f_auto/v1775485966/Seneca_Polytechnic_s0bju6.png",                       video:"https://player.vimeo.com/video/1051947943?h=cb672a08a6&autoplay=1" , badge:"COMMERCIAL" },
-    { title:"Scotiabank MLSE",                         year:"2024", role:"Virtual Production Supervisor", tag:"BROADCAST", img:"https://res.cloudinary.com/dzuuti93k/image/upload/q_auto/f_auto/v1775485966/Scotiabank_MLSE_gus9cf.png",                          video:"https://player.vimeo.com/video/1095086532?h=baabcdb92d&autoplay=1" , badge:"COMMERCIAL" },
-    { title:"Bellwoods Brewery - Stay Classy IPA",     year:"2024", role:"Virtual Production Supervisor", tag:"SOCIAL",    img:"https://res.cloudinary.com/dzuuti93k/image/upload/q_auto/f_auto/v1775485962/Bellwoods_Brewery_-_Stay_Classy_IPA_slzbzn.png",       video:"https://player.vimeo.com/video/949924833?autoplay=1" , badge:"COMMERCIAL" },
-    { title:"Mazda - Part of The Family",              year:"2024", role:"Virtual Production Supervisor", tag:"BROADCAST", img:"https://res.cloudinary.com/dzuuti93k/image/upload/q_auto/f_auto/v1775485965/Mazda_-_Part_of_The_Family_einm7l.png",                video:"https://player.vimeo.com/video/912949084?autoplay=1" , badge:"COMMERCIAL" },
-    { title:"RBC",                                     year:"2025", role:"Virtual Production Supervisor", tag:"BROADCAST", img:"https://res.cloudinary.com/dzuuti93k/image/upload/q_auto/f_auto/v1775485966/RBC_vlfcqi.png",                                      video:"https://player.vimeo.com/video/1068276639?h=4aa9f47a30&autoplay=1" , badge:"COMMERCIAL" },
-    { title:"EGALE Canada",                            year:"2024", role:"Virtual Production Supervisor", tag:"BRANDED",   img:"https://res.cloudinary.com/dzuuti93k/image/upload/q_auto/f_auto/v1775485964/Egale_Canada_y8ytka.png",                              video:"https://www.youtube.com/embed/y4S0pnKAPpQ?autoplay=1" , badge:"COMMERCIAL" },
-    { title:"CBC - Make The Season Great",             year:"2024", role:"Virtual Production Supervisor", tag:"BROADCAST", img:"https://res.cloudinary.com/dzuuti93k/image/upload/q_auto/f_auto/v1775583206/CBC_w8sjkr.png",                                      video:"https://www.youtube.com/embed/QSoqiAhzjdE?autoplay=1" , badge:"COMMERCIAL" },
-    { title:"TD Insurance - It\'s All Good",           year:"2024", role:"Virtual Production Supervisor", tag:"BROADCAST", img:"https://res.cloudinary.com/dzuuti93k/image/upload/q_auto/f_auto/v1775485966/TD_Insurance_-_Its_All_good_qjdlgn.png",               video:"https://player.vimeo.com/video/963484596?autoplay=1" , badge:"COMMERCIAL" },
-    { title:"Crazy D\'s Sparkling Prebiotic Soda",    year:"2025", role:"Virtual Production Supervisor", tag:"SOCIAL",    img:"https://res.cloudinary.com/dzuuti93k/image/upload/q_auto/f_auto/v1775485963/Crazy_D_s_Sparkling_Prebiotic_Soda_tpmkab.png",        video:"https://player.vimeo.com/video/1090215866?h=7c189c7d4a&autoplay=1" , badge:"COMMERCIAL" },
-    { title:"Ronin Knights",                           year:"2024", role:"Cinematographer",               tag:"ANIMATION", img:"https://res.cloudinary.com/dzuuti93k/image/upload/q_auto/f_auto/v1775485966/Ronin_Knights_evlwih.png",                            video:"https://www.youtube.com/embed/AXbsd8NsFAI?autoplay=1" , badge:"SHORT" },
-    { title:"Nespresso - What Else?",                  year:"2024", role:"Virtual Production Supervisor", tag:"BROADCAST", img:"https://res.cloudinary.com/dzuuti93k/image/upload/q_auto/f_auto/v1775485966/Nespresso_-_What_Else_ccprno.png",                    video:"https://player.vimeo.com/video/933764083?h=20486f7d2f&autoplay=1" , badge:"COMMERCIAL" },
-    { title:"Nair - Simply Smooth",                    year:"2025", role:"Virtual Production Supervisor", tag:"BROADCAST", img:"https://res.cloudinary.com/dzuuti93k/image/upload/q_auto/f_auto/v1775485965/Nair_-_Simply_Smooth_tnfd96.png",                     video:"https://player.vimeo.com/video/1105153427?h=c8c56a108a&autoplay=1" , badge:"COMMERCIAL" },
-    { title:"Internal",                                year:"2024", role:"Virtual Production Supervisor", tag:"INTERNAL",  img:"https://res.cloudinary.com/dzuuti93k/image/upload/q_auto/f_auto/v1775485965/Internal_cvfbtd.png",                                 video:"https://player.vimeo.com/video/917582172?h=0e6a9ffd2f&autoplay=1" , badge:"COMMERCIAL" },
-    { title:"Government of Canada - Raising Eyebrows", year:"2024", role:"Virtual Production Supervisor", tag:"BROADCAST", img:"https://res.cloudinary.com/dzuuti93k/image/upload/q_auto/f_auto/v1775485964/Government_of_Canada_-_Raising_Eyebrows_wfcy2h.png",   video:"https://www.youtube.com/embed/Q5V0yap77yg?autoplay=1" , badge:"COMMERCIAL" },
-    { title:"Red Bank Whiskey",                        year:"2024", role:"Virtual Production Supervisor", tag:"BRANDED",   img:"https://res.cloudinary.com/dzuuti93k/image/upload/q_auto/f_auto/v1775485966/Redbank_Whiskey_qrinee.png",                          video:"https://player.vimeo.com/video/886241578?h=107e47c8c6&autoplay=1" , badge:"COMMERCIAL" },
-    { title:"Creepy Bits",                             year:"2024", role:"Virtual Production Supervisor", tag:"ANIMATION", img:"https://res.cloudinary.com/dzuuti93k/image/upload/q_auto/f_auto/v1775485963/Creepy_Bits_wxtkev.png",                              video:"https://www.youtube.com/embed/PN-3dvX-3N4?autoplay=1" , badge:"COMMERCIAL" },
-    { title:"Bush's Beans - Bush's Makes It a Meal",   year:"2025", role:"VFX Artist",                    tag:"BROADCAST", img:"https://res.cloudinary.com/dzuuti93k/image/upload/q_auto/f_auto/v1775585028/bushsbeans_y60fo9.png",                                   video:"https://player.vimeo.com/video/1180913137?autoplay=1" , badge:"COMMERCIAL" },
-    { title:"Nestle - Baskin Robbins",                 year:"2026", role:"VFX Artist",                    tag:"BROADCAST", img:fallbackImg, video:"", comingSoon:true , badge:"COMMERCIAL" },
-    { title:"Mandys X Uber Eats",                      year:"2026", role:"VFX Artist",                    tag:"DIGITAL",   img:fallbackImg, video:"", comingSoon:true , badge:"COMMERCIAL" },
-    { title:"Relationship Goals",                      year:"2025", role:"Virtual Production Supervisor", tag:"BROADCAST", img:fallbackImg, video:"", comingSoon:true , badge:"FEATURE" },
-    { title:"Can I Come In",                           year:"2026", role:"VFX Artist",                    tag:"BROADCAST", img:fallbackImg, video:"", comingSoon:true , badge:"FEATURE" }
+    { title:"American Express - Business Platinum",   year:"2024", role:"Virtual Production Supervisor", tag:"BROADCAST", img:"https://res.cloudinary.com/dzuuti93k/image/upload/q_auto/f_auto/v1775485963/American_Express_-_Buisness_Platinum_rq6zhl.png",       video:"https://player.vimeo.com/video/1000785962?autoplay=1" , badge:"COMMERCIAL"  },
+    { title:"Secret - Stay Fresher Under Pressure",   year:"2025", role:"Virtual Production Supervisor", tag:"BROADCAST", img:"https://res.cloudinary.com/dzuuti93k/image/upload/v1775485967/Secret_-_Stay_Fresher_Under_Pressure_v6lnbv.png",                   video:"https://player.vimeo.com/video/1101277844?h=5e91c35cdb&autoplay=1" , badge:"COMMERCIAL"  },
+    { title:"TD Canada - TD Playoff Advisor",          year:"2025", role:"Virtual Production Supervisor", tag:"DIGITAL",   img:"https://res.cloudinary.com/dzuuti93k/image/upload/q_auto/f_auto/v1775485966/TD_Canada_-_TD_Playoff_Advisor_hqbeou.png",            video:"https://player.vimeo.com/video/1125938314?h=9e23a42790&autoplay=1" , badge:"COMMERCIAL"  },
+    { title:"M&Ms - Roadtrip",                         year:"2025", role:"Virtual Production Supervisor", tag:"BROADCAST", img:"https://res.cloudinary.com/dzuuti93k/image/upload/q_auto/f_auto/v1775485965/M_M_s_-_Road_Trip_fhvcgi.png",                        video:"https://player.vimeo.com/video/1153031523?h=3aa93e5b43&autoplay=1" , badge:"COMMERCIAL"  },
+    { title:"Audible Espanol",                         year:"2025", role:"Virtual Production Supervisor", tag:"DIGITAL",   img:"https://res.cloudinary.com/dzuuti93k/image/upload/q_auto/f_auto/v1775485963/Audible_Espanol_sxb8s2.png",                          video:"https://player.vimeo.com/video/1153031623?h=ffd807b05e&autoplay=1" , badge:"COMMERCIAL"  },
+    { title:"Doordash",                                year:"2025", role:"Virtual Production Supervisor", tag:"SOCIAL",    img:"https://res.cloudinary.com/dzuuti93k/image/upload/q_auto/f_auto/v1775485964/DoorDash_-_Must_Ice_Cream_wf17j3.png",                 video:"https://player.vimeo.com/video/1128234649?autoplay=1" , badge:"COMMERCIAL"  },
+    { title:"Pizza Hut",                               year:"2025", role:"Virtual Production Supervisor", tag:"BROADCAST", img:"https://res.cloudinary.com/dzuuti93k/image/upload/q_auto/f_auto/v1775485965/Pizza_Hut_qvs77i.png",                                video:"https://player.vimeo.com/video/1100398172?h=5c47516975&autoplay=1" , badge:"COMMERCIAL"  },
+    { title:"Tim Hortons - $1 Classic Donut",          year:"2024", role:"Virtual Production Supervisor", tag:"BROADCAST", img:"https://res.cloudinary.com/dzuuti93k/image/upload/q_auto/f_auto/v1775485967/Tim_Hortons_-_1_Classic_Donut_nvolsy.png",             video:"https://player.vimeo.com/video/1077259590?h=b1bf081af7&autoplay=1" , badge:"COMMERCIAL"  },
+    { title:"HALLS - Just Breathe Through It",         year:"2024", role:"Virtual Production Supervisor", tag:"BROADCAST", img:"https://res.cloudinary.com/dzuuti93k/image/upload/q_auto/f_auto/v1775485964/HALLS_-_Just_Breathe_Through_It_twkozd.png",           video:"https://player.vimeo.com/video/1036426764?h=5706bf4155&autoplay=1" , badge:"COMMERCIAL"  },
+    { title:"Hyundai",                                 year:"2024", role:"Virtual Production Supervisor", tag:"BROADCAST", img:"https://res.cloudinary.com/dzuuti93k/image/upload/q_auto/f_auto/v1775485965/Hyundai_xisgp8.png",                                  video:"https://www.youtube.com/embed/Uq9LR5F2HNs?autoplay=1" , badge:"COMMERCIAL"  },
+    { title:"Coast Capital",                           year:"2025", role:"Virtual Production Supervisor", tag:"BRANDED",   img:"https://res.cloudinary.com/dzuuti93k/image/upload/q_auto/f_auto/v1775485963/Coast_Capital_-_Get_Unstuck_imrcla.png",               video:"https://player.vimeo.com/video/1080539582?h=1a18af1670&autoplay=1" , badge:"COMMERCIAL"  },
+    { title:"Lotto Max - Dream To The Max",            year:"2024", role:"Virtual Production Supervisor", tag:"BROADCAST", img:"https://res.cloudinary.com/dzuuti93k/image/upload/q_auto/f_auto/v1775485965/Lotto_Max_-_Dream_To_The_Max_a1hd3t.png",              video:"https://player.vimeo.com/video/1007677871?autoplay=1" , badge:"COMMERCIAL"  },
+    { title:"U.S Bank - The Power of Us",              year:"2025", role:"Virtual Production Supervisor", tag:"BROADCAST", img:"https://res.cloudinary.com/dzuuti93k/image/upload/q_auto/f_auto/v1775583206/USBank_tspksp.png",                                   video:"https://player.vimeo.com/video/1090962650?h=f7fcbfb447&autoplay=1" , badge:"COMMERCIAL"  },
+    { title:"Greatest Journey",                        year:"2024", role:"Virtual Production Supervisor", tag:"ANIMATION", img:"https://res.cloudinary.com/dzuuti93k/image/upload/q_auto/f_auto/v1775485964/Greatest_Journey_xovbm0.png",                          video:"https://player.vimeo.com/video/1016237753?h=81a30a9833&autoplay=1" , badge:"COMMERCIAL"  },
+    { title:"Delta Casino - Casino Wherever You Go",   year:"2025", role:"Virtual Production Supervisor", tag:"DIGITAL",   img:"https://res.cloudinary.com/dzuuti93k/image/upload/q_auto/f_auto/v1775485963/Delta_Casino_-_Casino_Whereever_You_Go_skyunx.png",    video:"https://player.vimeo.com/video/1153031849?autoplay=1" , badge:"COMMERCIAL"  },
+    { title:"Apple - Vroom",                           year:"2024", role:"Virtual Production Supervisor", tag:"BRANDED",   img:"https://res.cloudinary.com/dzuuti93k/image/upload/q_auto/f_auto/v1775485962/Apple_-_VROOM_mezkwj.png",                            video:"https://www.youtube.com/embed/Du1wD-vZ0RQ?autoplay=1" , badge:"COMMERCIAL"  },
+    { title:"Seneca Polytechnic",                      year:"2025", role:"Virtual Production Supervisor", tag:"BRANDED",   img:"https://res.cloudinary.com/dzuuti93k/image/upload/q_auto/f_auto/v1775485966/Seneca_Polytechnic_s0bju6.png",                       video:"https://player.vimeo.com/video/1051947943?h=cb672a08a6&autoplay=1" , badge:"COMMERCIAL"  },
+    { title:"Scotiabank MLSE",                         year:"2024", role:"Virtual Production Supervisor", tag:"BROADCAST", img:"https://res.cloudinary.com/dzuuti93k/image/upload/q_auto/f_auto/v1775485966/Scotiabank_MLSE_gus9cf.png",                          video:"https://player.vimeo.com/video/1095086532?h=baabcdb92d&autoplay=1" , badge:"COMMERCIAL"  },
+    { title:"Bellwoods Brewery - Stay Classy IPA",     year:"2024", role:"Virtual Production Supervisor", tag:"SOCIAL",    img:"https://res.cloudinary.com/dzuuti93k/image/upload/q_auto/f_auto/v1775485962/Bellwoods_Brewery_-_Stay_Classy_IPA_slzbzn.png",       video:"https://player.vimeo.com/video/949924833?autoplay=1" , badge:"COMMERCIAL"  },
+    { title:"Mazda - Part of The Family",              year:"2024", role:"Virtual Production Supervisor", tag:"BROADCAST", img:"https://res.cloudinary.com/dzuuti93k/image/upload/q_auto/f_auto/v1775485965/Mazda_-_Part_of_The_Family_einm7l.png",                video:"https://player.vimeo.com/video/912949084?autoplay=1" , badge:"COMMERCIAL"  },
+    { title:"RBC",                                     year:"2025", role:"Virtual Production Supervisor", tag:"BROADCAST", img:"https://res.cloudinary.com/dzuuti93k/image/upload/q_auto/f_auto/v1775485966/RBC_vlfcqi.png",                                      video:"https://player.vimeo.com/video/1068276639?h=4aa9f47a30&autoplay=1" , badge:"COMMERCIAL"  },
+    { title:"EGALE Canada",                            year:"2024", role:"Virtual Production Supervisor", tag:"BRANDED",   img:"https://res.cloudinary.com/dzuuti93k/image/upload/q_auto/f_auto/v1775485964/Egale_Canada_y8ytka.png",                              video:"https://www.youtube.com/embed/y4S0pnKAPpQ?autoplay=1" , badge:"COMMERCIAL"  },
+    { title:"CBC - Make The Season Great",             year:"2024", role:"Virtual Production Supervisor", tag:"BROADCAST", img:"https://res.cloudinary.com/dzuuti93k/image/upload/q_auto/f_auto/v1775583206/CBC_w8sjkr.png",                                      video:"https://www.youtube.com/embed/QSoqiAhzjdE?autoplay=1" , badge:"COMMERCIAL"  },
+    { title:"TD Insurance - It\'s All Good",           year:"2024", role:"Virtual Production Supervisor", tag:"BROADCAST", img:"https://res.cloudinary.com/dzuuti93k/image/upload/q_auto/f_auto/v1775485966/TD_Insurance_-_Its_All_good_qjdlgn.png",               video:"https://player.vimeo.com/video/963484596?autoplay=1" , badge:"COMMERCIAL"  },
+    { title:"Crazy D\'s Sparkling Prebiotic Soda",    year:"2025", role:"Virtual Production Supervisor", tag:"SOCIAL",    img:"https://res.cloudinary.com/dzuuti93k/image/upload/q_auto/f_auto/v1775485963/Crazy_D_s_Sparkling_Prebiotic_Soda_tpmkab.png",        video:"https://player.vimeo.com/video/1090215866?h=7c189c7d4a&autoplay=1" , badge:"COMMERCIAL"  },
+    { title:"Ronin Knights",                           year:"2024", role:"Cinematographer",               tag:"ANIMATION", img:"https://res.cloudinary.com/dzuuti93k/image/upload/q_auto/f_auto/v1775485966/Ronin_Knights_evlwih.png",                            video:"https://www.youtube.com/embed/AXbsd8NsFAI?autoplay=1" , badge:"SHORT"  },
+    { title:"Nespresso - What Else?",                  year:"2024", role:"Virtual Production Supervisor", tag:"BROADCAST", img:"https://res.cloudinary.com/dzuuti93k/image/upload/q_auto/f_auto/v1775485966/Nespresso_-_What_Else_ccprno.png",                    video:"https://player.vimeo.com/video/933764083?h=20486f7d2f&autoplay=1" , badge:"COMMERCIAL"  },
+    { title:"Nair - Simply Smooth",                    year:"2025", role:"Virtual Production Supervisor", tag:"BROADCAST", img:"https://res.cloudinary.com/dzuuti93k/image/upload/q_auto/f_auto/v1775485965/Nair_-_Simply_Smooth_tnfd96.png",                     video:"https://player.vimeo.com/video/1105153427?h=c8c56a108a&autoplay=1" , badge:"COMMERCIAL"  },
+    { title:"Internal",                                year:"2024", role:"Virtual Production Supervisor", tag:"INTERNAL",  img:"https://res.cloudinary.com/dzuuti93k/image/upload/q_auto/f_auto/v1775485965/Internal_cvfbtd.png",                                 video:"https://player.vimeo.com/video/917582172?h=0e6a9ffd2f&autoplay=1" , badge:"COMMERCIAL"  },
+    { title:"Government of Canada - Raising Eyebrows", year:"2024", role:"Virtual Production Supervisor", tag:"BROADCAST", img:"https://res.cloudinary.com/dzuuti93k/image/upload/q_auto/f_auto/v1775485964/Government_of_Canada_-_Raising_Eyebrows_wfcy2h.png",   video:"https://www.youtube.com/embed/Q5V0yap77yg?autoplay=1" , badge:"COMMERCIAL"  },
+    { title:"Red Bank Whiskey",                        year:"2024", role:"Virtual Production Supervisor", tag:"BRANDED",   img:"https://res.cloudinary.com/dzuuti93k/image/upload/q_auto/f_auto/v1775485966/Redbank_Whiskey_qrinee.png",                          video:"https://player.vimeo.com/video/886241578?h=107e47c8c6&autoplay=1" , badge:"COMMERCIAL"  },
+    { title:"Creepy Bits",                             year:"2024", role:"Virtual Production Supervisor", tag:"ANIMATION", img:"https://res.cloudinary.com/dzuuti93k/image/upload/q_auto/f_auto/v1775485963/Creepy_Bits_wxtkev.png",                              video:"https://www.youtube.com/embed/PN-3dvX-3N4?autoplay=1" , badge:"COMMERCIAL"  },
+    { title:"Bush's Beans - Bush's Makes It a Meal",   year:"2025", role:"VFX Artist",                    tag:"BROADCAST", img:"https://res.cloudinary.com/dzuuti93k/image/upload/q_auto/f_auto/v1775585028/bushsbeans_y60fo9.png",                                   video:"https://player.vimeo.com/video/1180913137?autoplay=1" , badge:"COMMERCIAL"  },
+    { title:"Nestle - Baskin Robbins",                 year:"2026", role:"VFX Artist",                    tag:"BROADCAST", img:fallbackImg, video:"", comingSoon:true , badge:"COMMERCIAL"  },
+    { title:"Mandys X Uber Eats",                      year:"2026", role:"VFX Artist",                    tag:"DIGITAL",   img:fallbackImg, video:"", comingSoon:true , badge:"COMMERCIAL"  },
+    { title:"Relationship Goals",                      year:"2025", role:"Virtual Production Supervisor", tag:"BROADCAST", img:fallbackImg, video:"", comingSoon:true , badge:"FEATURE"  },
+    { title:"Can I Come In",                           year:"2026", role:"VFX Artist",                    tag:"BROADCAST", img:fallbackImg, video:"", comingSoon:true , badge:"FEATURE"  }
 ];
 
 // ═══════════════════════════════════════════
@@ -1406,20 +1630,34 @@ function startContraAnimation() {
 // ═══════════════════════════════════════════
 // MAIN ANIMATION LOOP
 // ═══════════════════════════════════════════
-function animate() {
+// Cache DOM refs used every frame
+const metaIdxEl      = document.getElementById('meta-idx');
+const degreeEl       = document.getElementById('degree-indicator');
+
+let lastFrameTime = 0;
+
+function animate(timestamp) {
     const step = 360 / itemCount;
 
-    if (!isDragging && !isScrolling) {
-        // Idle drift — slow auto-rotate after 1 minute of inactivity
-        if (isDrifting) targetRot -= 0.12;
+    // Delta-time: cap at 50ms so a tab-switch doesn't cause a huge jump
+    const dt = Math.min((timestamp - lastFrameTime) / (1000 / 60), 3);
+    lastFrameTime = timestamp;
 
-        let offset = (targetRot - SELECTOR_ANGLE) % step;
-        if (offset >  step/2) offset -= step;
-        if (offset < -step/2) offset += step;
-        targetRot -= offset * 0.2;
+    if (!isDragging && !isScrolling) {
+        if (isDrifting) targetRot -= 0.12 * dt;
+        if (spaceHeld)  targetRot -= 0.5  * dt;
+
+        if (!spaceHeld) {
+            let offset = (targetRot - SELECTOR_ANGLE) % step;
+            if (offset >  step/2) offset -= step;
+            if (offset < -step/2) offset += step;
+            targetRot -= offset * 0.2 * dt;
+        }
     }
 
-    currentRot += (targetRot - currentRot) * 0.18;
+    // Frame-rate independent lerp
+    const lerpFactor = 1 - Math.pow(1 - 0.18, dt);
+    currentRot += (targetRot - currentRot) * lerpFactor;
     dial.style.transform = `rotateZ(${currentRot}deg)`;
 
     let exactIndex  = (SELECTOR_ANGLE - currentRot) / step;
@@ -1427,27 +1665,26 @@ function animate() {
     if (activeIndex < 0) activeIndex += itemCount;
 
     if (activeIndex !== lastActiveIdx) {
-        if (lastActiveIdx !== -1) playTick();
+        if (lastActiveIdx !== -1 && !spaceHeld) playTick();
         lastActiveIdx = activeIndex;
-        document.getElementById('meta-idx').innerText = String(activeIndex+1).padStart(2,'0');
+        metaIdxEl.innerText = String(activeIndex+1).padStart(2,'0');
     }
 
-    // Ring updates every frame — driven by live rotation
     updateRing(activeIndex);
 
+    // Only touch DOM for active state changes — avoid classList churn every frame
     items.forEach((item, i) => {
         const wasActive = item.classList.contains('active');
         const isActive  = i === activeIndex;
-        item.classList.toggle('active', isActive);
-        // if card just lost active, clear any lingering inline tilt transform
-        if (wasActive && !isActive) {
-            item.querySelector('.card-wrapper').style.transform = '';
+        if (wasActive !== isActive) {
+            item.classList.toggle('active', isActive);
+            if (wasActive) item.querySelector('.card-wrapper').style.transform = '';
         }
     });
 
     let displayDeg = (SELECTOR_ANGLE - currentRot) % 360;
     if (displayDeg < 0) displayDeg += 360;
-    document.getElementById('degree-indicator').innerText = Math.round(displayDeg) + '°';
+    degreeEl.innerText = Math.round(displayDeg) + '°';
 
     requestAnimationFrame(animate);
 }
@@ -1516,6 +1753,321 @@ contactOverlay.addEventListener('click', (e) => {
     if (e.target === contactOverlay) closeContact();
 });
 
+// ═══════════════════════════════════════════
+// NIGHT MODE
+// ═══════════════════════════════════════════
+function toggleNightMode() {
+    document.body.classList.toggle('night-mode');
+    const isNight = document.body.classList.contains('night-mode');
+    try { localStorage.setItem('night_mode', isNight ? '1' : '0'); } catch(e){}
+    playBlip(isNight ? 200 : 600, 0.05);
+}
+try {
+    if (localStorage.getItem('night_mode') === '1') {
+        document.body.classList.add('night-mode');
+    }
+} catch(e){}
+
+// ═══════════════════════════════════════════
+let spaceHeld = false;
+let recordAudioNodes = null;
+const recordIndicator = document.getElementById('record-indicator');
+
+function startRecordAudio() {
+    try {
+        const ctx = getAudioCtx();
+        if (ctx.state === 'suspended') ctx.resume();
+
+        // ── SINGLE LONG ZELDA-STYLE LO-FI MELODY ─────────────────────────
+        // A minor pentatonic, 80 BPM, 32 steps of 8th notes = ~24 seconds per loop
+        const BPM  = 80;
+        const BEAT = 60 / BPM;
+        const S    = BEAT * 0.5; // 8th note step
+
+        // Melody: freq (0 = rest), duration in steps, volume multiplier
+        const MELODY = [
+            // phrase 1 — question
+            [440,2,1.0],[0,1,0],[523.3,1,0.7],[440,1,0.9],[392,2,0.8],[0,2,0],
+            // phrase 2 — answer rises
+            [392,1,0.7],[440,1,0.8],[523.3,2,1.0],[659.3,1,0.9],[0,1,0],[523.3,3,0.8],[0,1,0],
+            // phrase 3 — wander
+            [349.2,1,0.6],[392,1,0.7],[440,1,0.8],[392,1,0.7],[349.2,2,0.7],[293.7,1,0.6],[0,1,0],
+            // phrase 4 — ascend
+            [293.7,1,0.7],[349.2,1,0.7],[392,1,0.8],[440,1,0.9],[523.3,1,1.0],[659.3,2,1.0],[0,1,0],
+            // phrase 5 — float and resolve
+            [523.3,1,0.8],[440,2,0.9],[392,1,0.7],[440,1,0.8],[523.3,1,0.7],[440,4,1.0],[0,2,0],
+            // phrase 6 — echo of phrase 1
+            [440,1,0.6],[0,1,0],[523.3,1,0.5],[440,2,0.6],[349.2,1,0.5],[329.6,3,0.7],[0,2,0],
+            // phrase 7 — low countermelody
+            [220,2,0.5],[261.6,1,0.5],[293.7,2,0.6],[261.6,1,0.5],[220,3,0.6],[0,1,0],
+            // phrase 8 — swell back to top, long tail
+            [329.6,1,0.7],[392,1,0.8],[440,1,0.9],[523.3,1,1.0],[659.3,2,1.0],[523.3,2,0.8],[440,4,0.9],[0,4,0],
+        ];
+
+        // Bass: root note pulses, simple and sparse
+        const BASS = [
+            [55,2],[0,6],[55,1],[0,3],[55,2],[0,4],[73.4,2],[0,2],
+            [55,2],[0,4],[55,1],[0,5],[65.4,2],[0,2],[55,4],[0,4],
+            [55,2],[0,6],[55,1],[0,3],[49,2],[0,4],[55,2],[0,2],
+            [55,2],[0,4],[55,1],[0,5],[73.4,2],[0,2],[55,6],[0,2],
+        ];
+
+        // ── AUDIO GRAPH ───────────────────────────────
+        const master = ctx.createGain();
+        master.gain.setValueAtTime(0, ctx.currentTime);
+        master.gain.linearRampToValueAtTime(0.22, ctx.currentTime + 1.5);
+        master.connect(ctx.destination);
+
+        // Warm lo-fi low-pass
+        const lp = ctx.createBiquadFilter();
+        lp.type = 'lowpass'; lp.frequency.value = 4000; lp.Q.value = 0.5;
+        lp.connect(master);
+
+        // Tape echo — dotted 8th delay for that Zelda shimmer
+        const echo = ctx.createDelay(1.0);
+        echo.delayTime.value = S * 1.5;
+        const echoGain = ctx.createGain(); echoGain.gain.value = 0.28;
+        const echoFB   = ctx.createGain(); echoFB.gain.value   = 0.30;
+        const echoLP   = ctx.createBiquadFilter();
+        echoLP.type = 'lowpass'; echoLP.frequency.value = 2000;
+        echo.connect(echoLP); echoLP.connect(echoGain);
+        echoGain.connect(master);
+        echoLP.connect(echoFB); echoFB.connect(echo);
+
+        // Pad — two sine drones (root + fifth) slow fade-in
+        function makePad(hz, vol) {
+            const o = ctx.createOscillator();
+            const g = ctx.createGain();
+            o.type = 'sine'; o.frequency.value = hz;
+            g.gain.setValueAtTime(0, ctx.currentTime);
+            g.gain.linearRampToValueAtTime(vol, ctx.currentTime + 3.0);
+            o.connect(g); g.connect(master); o.start(); return o;
+        }
+        const pad1 = makePad(55,   0.07); // A1
+        const pad2 = makePad(82.4, 0.04); // E2 — perfect fifth
+
+        // ── NOTE SCHEDULERS ───────────────────────────
+        function scheduleMelNote(freq, t, dur, vol) {
+            if (freq === 0) return;
+            // Layered triangle + detuned sine for warmth
+            [[freq, 'triangle', vol * 0.16],
+             [freq * 2, 'sine',     vol * 0.07]].forEach(([f, type, g]) => {
+                const osc = ctx.createOscillator();
+                const env = ctx.createGain();
+                osc.type = type; osc.frequency.value = f;
+                env.gain.setValueAtTime(0, t);
+                env.gain.linearRampToValueAtTime(g, t + 0.05);
+                env.gain.setTargetAtTime(g * 0.6, t + 0.08, 0.15);
+                env.gain.exponentialRampToValueAtTime(0.001, t + dur * 0.95);
+                osc.connect(env); env.connect(lp); env.connect(echo);
+                osc.start(t); osc.stop(t + dur + 0.05);
+            });
+        }
+
+        function scheduleBassNote(freq, t, dur) {
+            if (freq === 0) return;
+            const osc = ctx.createOscillator();
+            const env = ctx.createGain();
+            osc.type = 'sine'; osc.frequency.value = freq;
+            env.gain.setValueAtTime(0, t);
+            env.gain.linearRampToValueAtTime(0.25, t + 0.02);
+            env.gain.exponentialRampToValueAtTime(0.001, t + dur * 0.9);
+            osc.connect(env); env.connect(master);
+            osc.start(t); osc.stop(t + dur + 0.02);
+        }
+
+        function scheduleKick(t) {
+            const osc = ctx.createOscillator();
+            const env = ctx.createGain();
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(70, t);
+            osc.frequency.exponentialRampToValueAtTime(28, t + 0.2);
+            env.gain.setValueAtTime(0.35, t);
+            env.gain.exponentialRampToValueAtTime(0.001, t + 0.4);
+            osc.connect(env); env.connect(master);
+            osc.start(t); osc.stop(t + 0.45);
+        }
+
+        function scheduleHat(t, vol) {
+            const len = Math.floor(ctx.sampleRate * 0.06);
+            const buf = ctx.createBuffer(1, len, ctx.sampleRate);
+            const d   = buf.getChannelData(0);
+            for (let i = 0; i < len; i++) d[i] = (Math.random()*2-1) * Math.pow(1-i/len, 3);
+            const src = ctx.createBufferSource(); src.buffer = buf;
+            const hpf = ctx.createBiquadFilter();
+            hpf.type = 'highpass'; hpf.frequency.value = 7000;
+            const env = ctx.createGain(); env.gain.value = vol;
+            src.connect(hpf); hpf.connect(env); env.connect(master);
+            src.start(t);
+        }
+
+        // ── LOOKAHEAD SCHEDULER ───────────────────────
+        const AHEAD  = 0.35;
+        const TICK   = 50;
+
+        // Pre-expand melody/bass into flat time arrays
+        function expandPattern(pattern, stepDur) {
+            const events = [];
+            let t = 0;
+            pattern.forEach(row => {
+                events.push({ freq: row[0], t, dur: row[1] * stepDur });
+                t += row[1] * stepDur;
+            });
+            return { events, loopLen: t };
+        }
+
+        const mel  = expandPattern(MELODY, S);
+        const bass = expandPattern(BASS, S);
+
+        // Kick every 4 beats (every BEAT*4 seconds), hat every beat offset by half
+        const kickLen = BEAT * 4;
+        const hatLen  = BEAT;
+
+        let melBase  = ctx.currentTime + 0.05, melOff  = 0;
+        let bassBase = ctx.currentTime + 0.05, bassOff = 0;
+        let nextKick = ctx.currentTime + 0.05;
+        let nextHat  = ctx.currentTime + 0.05 + BEAT * 0.5;
+        let hatStep  = 0;
+
+        function tick() {
+            if (!recordAudioNodes) return;
+            const ahead = ctx.currentTime + AHEAD;
+
+            // Melody — advance through events, loop seamlessly
+            while (true) {
+                const ev = mel.events[melOff];
+                const t  = melBase + ev.t;
+                if (t > ahead) break;
+                scheduleMelNote(ev.freq, t, ev.dur * 0.9, 1.0);
+                melOff++;
+                if (melOff >= mel.events.length) { melOff = 0; melBase += mel.loopLen; }
+            }
+
+            // Bass
+            while (true) {
+                const ev = bass.events[bassOff];
+                const t  = bassBase + ev.t;
+                if (t > ahead) break;
+                scheduleBassNote(ev.freq, t, ev.dur * 0.85);
+                bassOff++;
+                if (bassOff >= bass.events.length) { bassOff = 0; bassBase += bass.loopLen; }
+            }
+
+            // Kick — every 4 beats
+            while (nextKick < ahead) {
+                scheduleKick(nextKick);
+                nextKick += kickLen;
+            }
+
+            // Hat — every beat, quieter on off-beats
+            while (nextHat < ahead) {
+                scheduleHat(nextHat, hatStep % 2 === 0 ? 0.05 : 0.025);
+                nextHat += hatLen; hatStep++;
+            }
+
+            recordAudioNodes.tickId = setTimeout(tick, TICK);
+        }
+
+        recordAudioNodes = { master, pad1, pad2, ctx, tickId: null };
+        tick();
+
+    } catch(e) { console.error('Record audio error:', e); }
+}
+function stopRecordAudio() {
+    if (!recordAudioNodes) return;
+    try {
+        const { master, pad1, pad2, ctx, tickId } = recordAudioNodes;
+        clearTimeout(tickId);
+        master.gain.setValueAtTime(master.gain.value, ctx.currentTime);
+        master.gain.linearRampToValueAtTime(0, ctx.currentTime + 1.0);
+        setTimeout(() => {
+            try { pad1.stop(); } catch(e){}
+            try { pad2.stop(); } catch(e){}
+        }, 1100);
+    } catch(e) {}
+    recordAudioNodes = null;
+}
+
+document.addEventListener('keydown', (e) => {
+    if (e.code === 'Space' && !e.repeat && !searchOpen && !contactOpen) {
+        e.preventDefault();
+        if (!spaceHeld) {
+            spaceHeld = true;
+            document.body.classList.add('record-mode');
+            recordIndicator.classList.add('visible');
+            startRecordAudio();
+        }
+    }
+});
+document.addEventListener('keyup', (e) => {
+    if (e.code === 'Space') {
+        spaceHeld = false;
+        document.body.classList.remove('record-mode');
+        recordIndicator.classList.remove('visible');
+        stopRecordAudio();
+    }
+});
+
+// ═══════════════════════════════════════════
+// TYPE "CONOR" EASTER EGG
+// ═══════════════════════════════════════════
+const SECRET_WORD = 'CONOR';
+let typedBuffer = '';
+let typedTimer = null;
+
+document.addEventListener('keypress', (e) => {
+    if (searchOpen || contactOpen) return;
+    typedBuffer += e.key.toUpperCase();
+    if (typedBuffer.length > SECRET_WORD.length) {
+        typedBuffer = typedBuffer.slice(-SECRET_WORD.length);
+    }
+    clearTimeout(typedTimer);
+    typedTimer = setTimeout(() => { typedBuffer = ''; }, 1500);
+
+    if (typedBuffer === SECRET_WORD) {
+        triggerConorEasterEgg();
+        typedBuffer = '';
+    }
+});
+
+function triggerConorEasterEgg() {
+    // Selector line pulses green briefly
+    const line = document.getElementById('selector-line');
+    const origColor = line.style.backgroundColor;
+    line.style.transition = 'background-color 0.1s';
+    line.style.backgroundColor = '#00ff88';
+    // Flash HUD
+    const idx = document.getElementById('meta-idx');
+    idx.style.color = '#00ff88';
+    // Play ascending blips
+    [400, 500, 600, 800].forEach((f, i) => setTimeout(() => playBlip(f, 0.08), i * 80));
+    setTimeout(() => {
+        line.style.backgroundColor = origColor || '';
+        line.style.transition = '';
+        idx.style.color = '';
+    }, 800);
+}
+
+// ═══════════════════════════════════════════
+// CLICK RIPPLE
+// ═══════════════════════════════════════════
+document.addEventListener('click', (e) => {
+    const ripple = document.createElement('div');
+    ripple.className = 'click-ripple';
+    ripple.style.left = e.clientX + 'px';
+    ripple.style.top  = e.clientY + 'px';
+    document.body.appendChild(ripple);
+    setTimeout(() => ripple.remove(), 500);
+});
+
+// ═══════════════════════════════════════════
+// EMBOSS NAME PRESS-IN
+// ═══════════════════════════════════════════
+setTimeout(() => {
+    document.getElementById('emboss-title').classList.add('pressed');
+    document.getElementById('emboss-sub').classList.add('pressed');
+}, 120);
+
 // ── AUDIO UNLOCK ─────────────────────────
 // Browsers require a user gesture before AudioContext can run.
 // Pre-warm it on the very first interaction so tick sounds work immediately.
@@ -1546,7 +2098,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 });
 
-animate();
+requestAnimationFrame(animate);
 </script>
 </body>
 </html>
