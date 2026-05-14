@@ -163,6 +163,19 @@
             font-size: 9px !important;
         }
 
+        /* ── DOMINO FALL ── */
+        .item.domino-fallen .card-wrapper {
+            /* override handled via inline style for per-card angle */
+        }
+        @keyframes domino-impact {
+            0%   { filter: brightness(1); }
+            50%  { filter: brightness(1.4); }
+            100% { filter: brightness(1); }
+        }
+        .item.domino-impact .card-wrapper img {
+            animation: domino-impact 0.12s ease;
+        }
+
         /* Click ripple */
         .click-ripple {
             position: fixed;
@@ -704,7 +717,6 @@
             font-weight: 700; text-transform: uppercase; color: var(--text-color);
             letter-spacing: 2px;
         }
-
         /* ── KONAMI / CONTRA EASTER EGG ── */
         #konami-overlay {
             position: fixed; inset: 0;
@@ -716,18 +728,6 @@
         }
         #konami-overlay.visible { opacity: 1; }
         #konami-canvas { display: block; image-rendering: pixelated; }
-        #konami-msg {
-            font-family: 'Press Start 2P', monospace;
-            font-size: 11px; color: #fff;
-            text-align: center; margin-top: 24px;
-            letter-spacing: 2px; line-height: 2;
-        }
-        #konami-msg span { color: var(--active-color); }
-        #konami-close-hint {
-            font-family: 'Press Start 2P', monospace;
-            font-size: 7px; color: #444;
-            margin-top: 20px; letter-spacing: 1px;
-        }
 
         /* ── RESPONSIVE ── */
         @media (max-width: 1200px) { #tilt-container { transform: scale(0.65) rotateX(68deg); } }
@@ -824,8 +824,6 @@
 <!-- KONAMI OVERLAY -->
 <div id="konami-overlay">
     <canvas id="konami-canvas" width="480" height="200"></canvas>
-    <div id="konami-msg">You did it. You found the secret.<br>Now go back and look at my work<br><span>you goober.</span></div>
-    <div id="konami-close-hint">PRESS ANY KEY TO CONTINUE</div>
 </div>
 
 <!-- COMING SOON MODAL -->
@@ -958,7 +956,7 @@ const data = [
     { title:"Creepy Bits",                             year:"2024", role:"Virtual Production Supervisor", tag:"ANIMATION", img:"https://res.cloudinary.com/dzuuti93k/image/upload/q_auto/f_auto/v1775485963/Creepy_Bits_wxtkev.png",                              video:"https://www.youtube.com/embed/PN-3dvX-3N4?autoplay=1" , badge:"COMMERCIAL"  },
     { title:"Bush's Beans - Bush's Makes It a Meal",   year:"2025", role:"VFX Artist",                    tag:"BROADCAST", img:"https://res.cloudinary.com/dzuuti93k/image/upload/q_auto/f_auto/v1775585028/bushsbeans_y60fo9.png",                                   video:"https://player.vimeo.com/video/1180913137?autoplay=1" , badge:"COMMERCIAL"  },
     { title:"Nestle - Baskin Robbins",                 year:"2026", role:"VFX Artist",                    tag:"BROADCAST", img:fallbackImg, video:"", comingSoon:true , badge:"COMMERCIAL"  },
-    { title:"Mandys X Uber Eats",                      year:"2026", role:"VFX Artist",                    tag:"DIGITAL",   img:fallbackImg, video:"", comingSoon:true , badge:"COMMERCIAL"  },
+    { title:"Mandys X Uber Eats",                      year:"2026", role:"VFX Artist",                    tag:"DIGITAL",   img:"https://res.cloudinary.com/dzuuti93k/image/upload/v1778787796/Screenshot_2026-05-14_153850_vx5y1q.png", video:"https://player.vimeo.com/video/1192364459?autoplay=1", badge:"COMMERCIAL"  },
     { title:"Relationship Goals",                      year:"2025", role:"Virtual Production Supervisor", tag:"BROADCAST", img:fallbackImg, video:"", comingSoon:true , badge:"FEATURE"  },
     { title:"Can I Come In",                           year:"2026", role:"VFX Artist",                    tag:"BROADCAST", img:fallbackImg, video:"", comingSoon:true , badge:"FEATURE"  }
 ];
@@ -1542,10 +1540,7 @@ function startContraAnimation() {
             }
         });
 
-        // HUD score-style text
-        ctx.fillStyle = 'rgba(211,47,47,0.5)';
-        ctx.font = `${S*2}px "Courier New"`;
-        ctx.fillText('30 LIVES', W - 70, 16);
+        // draw complete
     }
 
     // ── UPDATE ────────────────────────────────
@@ -1644,7 +1639,6 @@ function animate(timestamp) {
     lastFrameTime = timestamp;
 
     if (!isDragging && !isScrolling) {
-        if (isDrifting) targetRot -= 0.12 * dt;
         if (spaceHeld)  targetRot -= 0.5  * dt;
 
         if (!spaceHeld) {
@@ -1668,6 +1662,7 @@ function animate(timestamp) {
         if (lastActiveIdx !== -1 && !spaceHeld) playTick();
         lastActiveIdx = activeIndex;
         metaIdxEl.innerText = String(activeIndex+1).padStart(2,'0');
+        updateURLForProject(activeIndex);
     }
 
     updateRing(activeIndex);
@@ -1689,22 +1684,42 @@ function animate(timestamp) {
     requestAnimationFrame(animate);
 }
 // ═══════════════════════════════════════════
-// IDLE DRIFT
+// IDLE TILT — 5 minutes
 // ═══════════════════════════════════════════
-const IDLE_DELAY = 60000; // 1 minute
-let idleTimer = null;
-let isDrifting = false;
+const IDLE_TILT_DELAY = 5 * 60 * 1000; // 5 minutes
+let idleTiltTimer  = null;
+let idleTilted     = false;
+const tiltContainer = document.getElementById('tilt-container');
 
-function resetIdleTimer() {
-    clearTimeout(idleTimer);
-    if (isDrifting) { isDrifting = false; }
-    idleTimer = setTimeout(() => { isDrifting = true; }, IDLE_DELAY);
+function resetIdleTilt() {
+    clearTimeout(idleTiltTimer);
+    if (idleTilted) {
+        idleTilted = false;
+        tiltContainer.style.transition = 'transform 1.2s cubic-bezier(0.2,0.8,0.2,1)';
+        tiltContainer.style.transform  = getBaseScale() + ' rotateX(68deg) rotateZ(0deg)';
+        setTimeout(() => { tiltContainer.style.transition = 'transform 0.3s ease'; }, 1300);
+    }
+    idleTiltTimer = setTimeout(triggerIdleTilt, IDLE_TILT_DELAY);
+}
+
+function getBaseScale() {
+    const w = window.innerWidth;
+    if (w <= 500)  return 'scale(0.3)';
+    if (w <= 800)  return 'scale(0.45)';
+    if (w <= 1200) return 'scale(0.65)';
+    return 'scale(0.8)';
+}
+
+function triggerIdleTilt() {
+    idleTilted = true;
+    tiltContainer.style.transition = 'transform 3s cubic-bezier(0.4,0,0.2,1)';
+    tiltContainer.style.transform  = getBaseScale() + ' rotateX(68deg) rotateZ(8deg)';
 }
 
 ['mousemove','mousedown','wheel','touchstart','keydown'].forEach(ev =>
-    window.addEventListener(ev, resetIdleTimer, { passive: true })
+    window.addEventListener(ev, resetIdleTilt, { passive: true })
 );
-resetIdleTimer();
+resetIdleTilt();
 
 // ═══════════════════════════════════════════
 // COUNTER RING
@@ -2009,25 +2024,25 @@ document.addEventListener('keyup', (e) => {
 });
 
 // ═══════════════════════════════════════════
-// TYPE "CONOR" EASTER EGG
 // ═══════════════════════════════════════════
-const SECRET_WORD = 'CONOR';
+// TYPED EASTER EGGS
+// ═══════════════════════════════════════════
+const SECRET_WORD  = 'CONOR';
+const VFX_TRIGGER  = 'VFX';
+const KILL_TRIGGER = 'KILL';
 let typedBuffer = '';
-let typedTimer = null;
+let typedTimer  = null;
 
 document.addEventListener('keypress', (e) => {
     if (searchOpen || contactOpen) return;
     typedBuffer += e.key.toUpperCase();
-    if (typedBuffer.length > SECRET_WORD.length) {
-        typedBuffer = typedBuffer.slice(-SECRET_WORD.length);
-    }
+    const maxLen = Math.max(SECRET_WORD.length, VFX_TRIGGER.length, KILL_TRIGGER.length);
+    if (typedBuffer.length > maxLen) typedBuffer = typedBuffer.slice(-maxLen);
     clearTimeout(typedTimer);
     typedTimer = setTimeout(() => { typedBuffer = ''; }, 1500);
-
-    if (typedBuffer === SECRET_WORD) {
-        triggerConorEasterEgg();
-        typedBuffer = '';
-    }
+    if (typedBuffer.endsWith(SECRET_WORD)) { triggerConorEasterEgg(); typedBuffer = ''; }
+    if (typedBuffer.endsWith(VFX_TRIGGER))  { triggerVFXEasterEgg();   typedBuffer = ''; }
+    if (typedBuffer.endsWith(KILL_TRIGGER)) { triggerDominoEasterEgg(); typedBuffer = ''; }
 });
 
 function triggerConorEasterEgg() {
@@ -2046,6 +2061,186 @@ function triggerConorEasterEgg() {
         line.style.transition = '';
         idx.style.color = '';
     }, 800);
+}
+
+// ═══════════════════════════════════════════
+// TYPE "VFX" EASTER EGG — film negative flash
+// ═══════════════════════════════════════════
+function triggerVFXEasterEgg() {
+    // Invert all card images briefly like a film negative
+    items.forEach(item => {
+        const img = item.querySelector('img');
+        if (!img) return;
+        img.style.transition = 'filter 0.08s ease';
+        img.style.filter = 'invert(1) contrast(1.2)';
+    });
+    playBlip(150, 0.12);
+    // Flash white overlay
+    const flash = document.createElement('div');
+    flash.style.cssText = 'position:fixed;inset:0;background:#fff;opacity:0.15;pointer-events:none;z-index:8998;transition:opacity 0.4s ease;';
+    document.body.appendChild(flash);
+    requestAnimationFrame(() => requestAnimationFrame(() => { flash.style.opacity = '0'; }));
+    setTimeout(() => flash.remove(), 500);
+    // Snap back after 300ms
+    setTimeout(() => {
+        items.forEach(item => {
+            const img = item.querySelector('img');
+            if (!img) return;
+            img.style.transition = 'filter 0.3s ease';
+            img.style.filter = '';
+            // Restore active state filter if needed
+            if (item.classList.contains('active')) {
+                img.style.filter = 'grayscale(0) contrast(1.1) brightness(1.05) opacity(1)';
+            }
+        });
+    }, 300);
+}
+
+// ═══════════════════════════════════════════
+// PROJECT DEEP LINKING — ?p=project-name
+// ═══════════════════════════════════════════
+(function() {
+    const params = new URLSearchParams(window.location.search);
+    const p = params.get('p');
+    if (!p) return;
+
+    // Match slug to project title
+    const slug = p.toLowerCase().replace(/[^a-z0-9]/g, '-');
+    const idx  = data.findIndex(d =>
+        d.title.toLowerCase().replace(/[^a-z0-9]/g, '-').includes(slug) ||
+        slug.includes(d.title.toLowerCase().replace(/[^a-z0-9]/g, '-').slice(0, 6))
+    );
+    if (idx < 0) return;
+
+    const step = 360 / itemCount;
+    const rot  = SELECTOR_ANGLE - (idx * step);
+    currentRot = rot; targetRot = rot;
+})();
+
+// Update URL hash when active card changes — run after first render
+let lastURLIdx = -1;
+function updateURLForProject(idx) {
+    if (idx === lastURLIdx) return;
+    lastURLIdx = idx;
+    const slug = data[idx].title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+    try {
+        history.replaceState(null, '', window.location.pathname + '?p=' + slug);
+    } catch(e) {}
+}
+
+// ═══════════════════════════════════════════
+// TYPE "KILL" EASTER EGG — DOMINO FALL
+// ═══════════════════════════════════════════
+let dominoActive = false;
+
+function triggerDominoEasterEgg() {
+    if (dominoActive) return;
+    dominoActive = true;
+    dialLocked = true;
+
+    // Thud sound — deep impact per card
+    function playThud(pitchMult, delay) {
+        setTimeout(() => {
+            try {
+                const ctx = getAudioCtx();
+                if (ctx.state === 'suspended') ctx.resume();
+                const osc  = ctx.createOscillator();
+                const env  = ctx.createGain();
+                const freq = 55 * pitchMult;
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(freq, ctx.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(freq * 0.25, ctx.currentTime + 0.18);
+                env.gain.setValueAtTime(0.6, ctx.currentTime);
+                env.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.35);
+                osc.connect(env); env.connect(ctx.destination);
+                osc.start(); osc.stop(ctx.currentTime + 0.4);
+                // Body noise layer
+                const noise = ctx.createOscillator();
+                const nEnv  = ctx.createGain();
+                noise.type = 'sawtooth'; noise.frequency.value = freq * 2;
+                nEnv.gain.setValueAtTime(0.1, ctx.currentTime);
+                nEnv.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.06);
+                noise.connect(nEnv); nEnv.connect(ctx.destination);
+                noise.start(); noise.stop(ctx.currentTime + 0.08);
+            } catch(e) {}
+        }, delay);
+    }
+
+    // Fall order: start from active card, ripple forward around the dial
+    const startIdx = lastActiveIdx >= 0 ? lastActiveIdx : 0;
+    const order = Array.from({length: itemCount}, (_, i) => (startIdx + i) % itemCount);
+
+    // Timing
+    const STAGGER   = 75;    // ms between each card starting to fall
+    const FALL_DUR  = 500;   // ms to fall flat
+    const OVERSHOOT = 120;   // ms overshoot past flat then bounce back
+    const SETTLE    = 160;   // ms settle to final resting
+    const HOLD      = 2000;  // ms to hold flat before standing up
+    const STAND_STAGGER = 25; // ms between each card standing back up
+
+    // The card resting transform (standing) uses rotateX(90deg)
+    // Flat on the ground = rotateX(0deg) — pivoting from bottom center
+    // Slight overshoot = rotateX(-8deg) then bounce to rotateX(5deg) final rest
+
+    order.forEach((cardIdx, seq) => {
+        const delay = seq * STAGGER;
+        const cw    = items[cardIdx].querySelector('.card-wrapper');
+        const isActive = items[cardIdx].classList.contains('active');
+        const baseZ = isActive ? 410 : 160;
+        const scaleStr = isActive ? ' scale(1.2)' : '';
+
+        setTimeout(() => {
+            // PHASE 1 — fall with gravity acceleration
+            cw.style.transition = `transform ${FALL_DUR}ms cubic-bezier(0.4, 0.0, 1.0, 1.0)`;
+            cw.style.transform  = `translateZ(${baseZ}px) rotateX(0deg) rotateY(-65deg)${scaleStr}`;
+
+            // PHASE 2 — overshoot past flat
+            setTimeout(() => {
+                cw.style.transition = `transform ${OVERSHOOT}ms cubic-bezier(0.0, 0.0, 0.2, 1.0)`;
+                cw.style.transform  = `translateZ(${baseZ}px) rotateX(-6deg) rotateY(-65deg)${scaleStr}`;
+
+                // PHASE 3 — bounce back to rest
+                setTimeout(() => {
+                    cw.style.transition = `transform ${SETTLE}ms cubic-bezier(0.2, 0.8, 0.4, 1.0)`;
+                    cw.style.transform  = `translateZ(${baseZ}px) rotateX(3deg) rotateY(-65deg)${scaleStr}`;
+                }, OVERSHOOT);
+            }, FALL_DUR);
+
+            // Thud sound on impact — slightly randomised pitch
+            playThud(0.8 + Math.random() * 0.4, FALL_DUR - 30);
+
+            // Impact brightness flash
+            const img = cw.querySelector('img');
+            if (img) {
+                setTimeout(() => {
+                    img.style.transition = 'filter 0.06s ease';
+                    img.style.filter = 'brightness(1.6) grayscale(1) contrast(0.9) opacity(0.8)';
+                    setTimeout(() => {
+                        img.style.transition = 'filter 0.25s ease';
+                        img.style.filter = '';
+                    }, 80);
+                }, FALL_DUR - 20);
+            }
+
+        }, delay);
+    });
+
+    // Stand back up after HOLD
+    const totalFall = (itemCount - 1) * STAGGER + FALL_DUR + OVERSHOOT + SETTLE;
+
+    setTimeout(() => {
+        order.forEach((cardIdx, seq) => {
+            const cw = items[cardIdx].querySelector('.card-wrapper');
+            setTimeout(() => {
+                cw.style.transition = 'transform 0.45s cubic-bezier(0.2, 0.8, 0.2, 1.15)';
+                cw.style.transform  = ''; // CSS class handles resting state
+            }, seq * STAND_STAGGER);
+        });
+        setTimeout(() => {
+            dominoActive = false;
+            dialLocked   = false;
+        }, itemCount * STAND_STAGGER + 500);
+    }, totalFall + HOLD);
 }
 
 // ═══════════════════════════════════════════
